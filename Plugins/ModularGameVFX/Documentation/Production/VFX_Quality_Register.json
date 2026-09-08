@@ -8,9 +8,9 @@
     "mapping_rule": "NiagaraSystem rows only; formal=true -> Review; all remaining -> Prototype. asset_path uses manifest new field; old paths remain in backup evidence only."
   },
   "limitations": [
-    "Status initialization only; not a fresh visual, gameplay, compile, dependency or performance review.",
-    "Manifest target paths are not independently verified by this register.",
-    "No ProductionReady claims; all unmeasured scores and acceptance evidence remain empty.",
+    "Technical loading, class, compile, Catalog and dependency checks are linked below; no human visual or gameplay approval is inferred.",
+    "No ProductionReady claims; unmeasured quality scores and acceptance gates remain unchanged.",
+    "GPU/CPU Niagara costs and VR stereo comfort require real profiling and human review.",
     "Example element packs are not authorized work items."
   ],
   "summary": {
@@ -33,7 +33,7 @@
   "entries": [
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/NS_Arcane_Missiles_Projectile",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Projectile.Arcane.Missiles",
       "category": "Projectile",
       "element": "Arcane",
@@ -69,15 +69,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/NS_Arcane_Missiles_Impact",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Impact.Arcane.Missiles",
       "category": "Impact",
       "element": "Arcane",
@@ -113,15 +122,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/NS_Fire_Fireball_Projectile",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Projectile.Fire.Fireball",
       "category": "Projectile",
       "element": "Fire",
@@ -157,15 +175,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/NS_Fire_Impact_Burst",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Impact.Fire.FireBurst",
       "category": "Impact",
       "element": "Fire",
@@ -201,15 +228,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/NS_Fire_Flamestrike_Area",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Area.Fire.Flamestrike",
       "category": "Area",
       "element": "Fire",
@@ -245,15 +281,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/NS_Ice_Frostbolt_Projectile",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Projectile.Ice.Frostbolt",
       "category": "Projectile",
       "element": "Ice",
@@ -289,15 +334,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/NS_Ice_Frostbolt_Impact",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Impact.Ice.Frostbolt",
       "category": "Impact",
       "element": "Ice",
@@ -333,15 +387,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/NS_Nature_PetalBloom_Aura",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Status.Nature.PetalBloom",
       "category": "Status",
       "element": "Nature",
@@ -377,15 +440,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/NS_Ice_Frostbolt_Charge",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Cast.Ice.FrostboltCharge",
       "category": "Cast",
       "element": "Ice",
@@ -421,15 +493,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/NS_Ice_FrostNova_Burst",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Area.Ice.FrostNova",
       "category": "Area",
       "element": "Ice",
@@ -465,15 +546,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/NS_Fire_Fireball_Charge",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Cast.Fire.FireballCharge",
       "category": "Cast",
       "element": "Fire",
@@ -509,15 +599,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/14_Indicator/NS_Fire_Flamestrike_Warning",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Indicator.Fire.FlamestrikeWarning",
       "category": "Indicator",
       "element": "Fire",
@@ -553,15 +652,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/NS_Arcane_Missiles_Channel",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Cast.Arcane.MissilesChannel",
       "category": "Cast",
       "element": "Arcane",
@@ -597,15 +705,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": true,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Sparks/Legacy/NS_Energy_MagicSpark_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Core.Energy.MagicSparkLegacy",
       "category": "Core",
       "element": "Energy",
@@ -641,15 +758,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/00_Core/Sparks/Legacy/NS_Energy_MagicSparkSimple_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Core.Energy.MagicSparkSimpleLegacy",
       "category": "Core",
       "element": "Energy",
@@ -685,15 +811,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/Legacy/NS_Energy_ChargeOrb_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Cast.Energy.EnergyOrbLegacy",
       "category": "Cast",
       "element": "Energy",
@@ -729,15 +864,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/Legacy/NS_Energy_Projectile_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Projectile.Energy.MagicProjectileLegacy",
       "category": "Projectile",
       "element": "Energy",
@@ -773,15 +917,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/03_Trail/Legacy/NS_Energy_ProjectileTrail_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Trail.Energy.ProjectileTrailLegacy",
       "category": "Trail",
       "element": "Energy",
@@ -817,15 +970,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/Legacy/NS_Energy_Impact_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Impact.Energy.MagicImpactLegacy",
       "category": "Impact",
       "element": "Energy",
@@ -861,15 +1023,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/Legacy/NS_Energy_GroundArea_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Area.Energy.GroundAOELegacy",
       "category": "Area",
       "element": "Energy",
@@ -905,15 +1076,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/Legacy/NS_Energy_MagicCircle_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Area.Energy.MagicCircleLegacy",
       "category": "Area",
       "element": "Energy",
@@ -949,15 +1129,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/09_Lifecycle/Legacy/NS_Energy_Summoning_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Lifecycle.Energy.SummoningLegacy",
       "category": "Lifecycle",
       "element": "Energy",
@@ -993,15 +1182,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/08_Space/Legacy/NS_Arcane_Portal_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Space.Arcane.PortalLegacy",
       "category": "Space",
       "element": "Arcane",
@@ -1037,15 +1235,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/08_Space/Legacy/NS_Arcane_Teleport_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Space.Arcane.TeleportLegacy",
       "category": "Space",
       "element": "Arcane",
@@ -1081,15 +1288,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/Legacy/NS_Energy_Shield_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Status.Energy.ShieldLegacy",
       "category": "Status",
       "element": "Energy",
@@ -1125,15 +1341,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/04_Beam/Legacy/NS_Energy_Beam_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Beam.Energy.MagicBeamLegacy",
       "category": "Beam",
       "element": "Energy",
@@ -1169,15 +1394,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/04_Beam/Legacy/NS_Lightning_Chain_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Beam.Lightning.ChainLegacy",
       "category": "Beam",
       "element": "Lightning",
@@ -1213,15 +1447,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/04_Beam/Legacy/NS_Lightning_Bolt_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Beam.Lightning.BoltLegacy",
       "category": "Beam",
       "element": "Lightning",
@@ -1257,15 +1500,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/Legacy/NS_Fire_Explosion_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Impact.Fire.ExplosionLegacy",
       "category": "Impact",
       "element": "Fire",
@@ -1301,15 +1553,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/11_World/Legacy/NS_Fire_Loop_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.World.Fire.FireLoopLegacy",
       "category": "World",
       "element": "Fire",
@@ -1345,15 +1606,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/Legacy/NS_Fire_LavaBurst_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Impact.Fire.LavaBurstLegacy",
       "category": "Impact",
       "element": "Fire",
@@ -1389,15 +1659,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": false,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/01_Cast/Legacy/NS_Ice_FrostboltCharge_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Cast.Ice.FrostboltChargeLegacy",
       "category": "Cast",
       "element": "Ice",
@@ -1433,15 +1712,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/05_Impact/Legacy/NS_Ice_FrostboltImpact_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Impact.Ice.FrostboltLegacy",
       "category": "Impact",
       "element": "Ice",
@@ -1477,15 +1765,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/02_Projectile/Legacy/NS_Ice_FrostboltProjectile_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Projectile.Ice.FrostboltLegacy",
       "category": "Projectile",
       "element": "Ice",
@@ -1521,15 +1818,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/06_Area/Legacy/NS_Ice_FrostNova_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Area.Ice.FrostNovaLegacy",
       "category": "Area",
       "element": "Ice",
@@ -1565,15 +1871,24 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     },
     {
       "asset_path": "/ModularGameVFX/ModularGameVFXLibrary/07_Status/Legacy/NS_Nature_PetalsAura_Legacy",
-      "asset_path_verification": "ManifestTarget_NotReverified",
+      "asset_path_verification": "LoadedAndClassVerified_Unreal5.8",
       "gameplay_tag": "VFX.Status.Nature.PetalsAuraLegacy",
       "category": "Status",
       "element": "Nature",
@@ -1609,11 +1924,20 @@
       "profile_status": "NotRun",
       "profile_note": "尚待实机 Profile",
       "measurements": null,
-      "evidence_refs": [],
+      "evidence_refs": [
+        "Saved/TaxonomyMigration/verification.json"
+      ],
       "last_reviewed_at": null,
       "reviewer": null,
       "asset_revision": null,
-      "replacement_vfx_tag": null
+      "replacement_vfx_tag": null,
+      "technical_verification": {
+        "completed_utc": "2026-09-08T09:20:57.388418+00:00",
+        "compile_diagnostics_passed": true,
+        "forbidden_core_dependencies": 0,
+        "default_catalog_registered": false,
+        "evidence": "Saved/TaxonomyMigration/verification.json"
+      }
     }
   ]
 }

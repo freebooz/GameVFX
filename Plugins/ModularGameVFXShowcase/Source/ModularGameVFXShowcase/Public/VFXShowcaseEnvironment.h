@@ -53,6 +53,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="Showcase") void SetBackground(EVFXShowcaseBackground Value);
     UFUNCTION(BlueprintCallable, Category="Showcase") void SetCameraDistance(float DistanceCm);
     UFUNCTION(BlueprintCallable, Category="Showcase") void FocusStress(bool bStress);
+    void FrameStressGrid(int32 Columns, int32 Rows, float Spacing);
     UFUNCTION(BlueprintCallable, Category="Showcase") void FocusEnvironment();
     UFUNCTION(BlueprintCallable, Category="Showcase") void SetSurface(FName Surface);
     /** Local +Z is the selected visible surface normal; location lies on its face. */
@@ -70,6 +71,8 @@ private:
     bool bStressCamera = false;
     bool bEnvironmentCamera = false;
     float CameraDistance = 1600;
+    float StressCameraDistance = 2400;
+    FVector StressFocus = FVector(1000,5000,100);
     bool bSurfaceIsGround = false;
     void UpdateCamera();
 };

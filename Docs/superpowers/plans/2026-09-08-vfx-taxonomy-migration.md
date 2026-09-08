@@ -19,14 +19,20 @@
 
 ## Execution
 
-- [ ] Record file/asset inventory and back up Content, Config and Source for both plugins and host configuration.
-- [ ] Add typed Category, Element, Form, Context and Lifecycle metadata; expose existing PerformanceClass as Priority without changing its serialized name. Verify enum reflection and the existing source contract; compile the editor modules.
-- [ ] Derive a collision-free package/name manifest from real Asset Registry classes and known system roles. Use NS_/NE_/NM_/M_/MI_/MF_/T_/SM_/DA_/ET_/BP_ prefixes.
-- [ ] Load local reference graph and migrate using AssetTools.rename_assets. Save affected packages and preserve redirectors until all references have been verified.
-- [ ] Register category-first invocation tags and legacy redirects. Create/update the real default catalog with metadata and soft references to migrated assets.
-- [ ] Create/reuse Critical, Combat, Cosmetic and Ambient Effect Types; retain per-system authored overrides and document the High/Medium/Low/VRMobile quality mapping.
-- [ ] Verify target packages exist, old paths resolve, no forbidden core dependencies or duplicate destinations, metadata/tags agree, and current completed systems compile. Record legacy failures separately.
-- [ ] Deliver taxonomy specification, migration manifest and verification report; synchronize the existing catalog document generator with actual paths.
+- [x] Record file/asset inventory and back up Content, Config and Source for both plugins and host configuration. SHA256 verified 1,240 backup files.
+- [x] Add typed Category, Element, Form, Context and Lifecycle metadata; expose existing PerformanceClass as Priority without changing its serialized name. Compile actual editor modules and verify reflected metadata.
+- [x] Derive and validate a collision-free manifest for 1,059 real packages.
+- [x] Rename through AssetTools, resave 1,293 referencing packages, remove the six remaining redirectors and eight obsolete empty content branches after reference fixup.
+- [x] Register category-first invocation tags and create the real 13-entry default Catalog. Remove obsolete package/class CoreRedirects as explicitly requested.
+- [x] Create four Effect Types and retain authored system/emitter overrides. Quality indices: VRMobile=0, Low=1, Medium=2, High=3, Cinematic=4.
+- [x] Fresh verification: all 1,059 new paths/classes valid; 1,065 total core assets; no old files/registry entries/redirectors or forbidden dependencies; Catalog valid; 13 curated systems compile. Report 12 failed legacy systems separately.
+- [x] Synchronize schema 1.3 Catalog JSON/MD/CSV/XLSX with actual paths, preserving historical paths only as traceable records and keeping ProductionReady at zero.
+
+## Final evidence, 2026-09-08
+
+`Saved/TaxonomyMigration/verification.json` passed with zero acceptance failures. The native `ModularGameVFXDemo.Migration.NativeDefaultReferences` Automation test verified all 15 protected CDO references against the current DLL. Verification saved no asset files.
+
+The H:/GameVFX/MythicVFXLab disk tree still contains 0 files and 1,057 empty directories. Its recursive deletion was explicitly approved by the user, but automatic approval policy rejected the command before execution. This external cleanup remains blocked; no alternate deletion mechanism was used.
 
 ## Verification cases
 

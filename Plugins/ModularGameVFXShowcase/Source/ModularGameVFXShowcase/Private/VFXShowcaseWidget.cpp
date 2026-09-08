@@ -2,6 +2,7 @@
 #include "VFXShowcaseController.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
+#include "Components/ButtonSlot.h"
 #include "Components/CheckBox.h"
 #include "Components/ComboBoxString.h"
 #include "Components/EditableTextBox.h"
@@ -81,6 +82,13 @@ UTextBlock* UVFXShowcaseWidget::Label(UVerticalBox* Box, const FString& Text, in
     Result->SetFont(Font);
     Result->SetColorAndOpacity(FSlateColor(FLinearColor(0.88f, 0.92f, 0.98f)));
     Result->SetAutoWrapText(true);
+    Result->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
+    if (Inspector && Box == Inspector->GetContentBox())
+    {
+        // Resolve long asset paths before layout; auto-wrap alone learns its width one frame late.
+        Result->SetAutoWrapText(false);
+        Result->SetWrapTextAt(300.f);
+    }
     Box->AddChildToVerticalBox(Result)->SetPadding(FMargin(0, 3));
     return Result;
 }
@@ -95,7 +103,22 @@ UButton* UVFXShowcaseWidget::ActionButton(UPanelWidget* Parent, const FString& T
     FSlateFontInfo Font = Caption->GetFont(); Font.Size = 11; Caption->SetFont(Font);
     Caption->SetColorAndOpacity(FSlateColor(FLinearColor::White));
     Caption->SetAutoWrapText(true);
+    if (Action.StartsWith(TEXT("Entry:")) || Action.StartsWith(TEXT("Category:")))
+    {
+        Font.Size = 10;
+        Caption->SetFont(Font);
+        Caption->SetAutoWrapText(false);
+        Caption->SetWrapTextAt(248.f);
+        Caption->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
+        Caption->SetMargin(FMargin(5.f, 5.f));
+    }
     Button->SetContent(Caption);
+    if (Action.StartsWith(TEXT("Entry:")) || Action.StartsWith(TEXT("Category:")))
+    {
+        UButtonSlot* ContentSlot = CastChecked<UButtonSlot>(Caption->Slot);
+        ContentSlot->SetHorizontalAlignment(HAlign_Fill);
+        ContentSlot->SetVerticalAlignment(VAlign_Fill);
+    }
     if (UWrapBox* Wrap = Cast<UWrapBox>(Parent)) Wrap->AddChildToWrapBox(Button)->SetPadding(FMargin(3));
     else if (UVerticalBox* Vertical = Cast<UVerticalBox>(Parent)) Vertical->AddChildToVerticalBox(Button)->SetPadding(FMargin(0, 3));
     else Parent->AddChild(Button);
@@ -156,16 +179,23 @@ void UVFXShowcaseWidget::BuildWorkbench()
     BrowserSize->SetWidthOverride(310); BrowserSize->SetContent(Frame(WidgetTree, Browser));
     Body->AddChildToHorizontalBox(BrowserSize);
     Search = WidgetTree->ConstructWidget<UEditableTextBox>();
-    Search->SetHintText(FText::FromString(TEXT("Search name, tag, element, form")));
+    Search->SetHintText(FText::FromString(TEXT("Search name / tag")));
+    FEditableTextBoxStyle SearchStyle = Search->GetWidgetStyle();
+    SearchStyle.TextStyle.Font.Size = 12;
+    SearchStyle.ForegroundColor = FSlateColor(FLinearColor(.04f, .06f, .09f));
+    SearchStyle.TextStyle.ColorAndOpacity = SearchStyle.ForegroundColor;
+    SearchStyle.Padding = FMargin(7.f, 5.f);
+    Search->SetWidgetStyle(SearchStyle);
+    Search->SetForegroundColor(FLinearColor(.04f, .06f, .09f));
     Search->OnTextChanged.AddDynamic(this, &UVFXShowcaseWidget::SearchChanged);
     Browser->AddChildToVerticalBox(Search);
 
     Categories = CreateWidget<UVFXShowcaseCategoryMenu>(this);
     UScrollBox* CategoryScroll = WidgetTree->ConstructWidget<UScrollBox>();
-    CategoryScroll->SetOrientation(Orient_Horizontal);
+    CategoryScroll->SetOrientation(Orient_Vertical);
     CategoryScroll->AddChild(Categories);
     USizeBox* CategorySize = WidgetTree->ConstructWidget<USizeBox>();
-    CategorySize->SetHeightOverride(112); CategorySize->SetContent(CategoryScroll);
+    CategorySize->SetHeightOverride(172); CategorySize->SetContent(CategoryScroll);
     Browser->AddChildToVerticalBox(CategorySize);
     ElementFilter = Choice(Browser, TEXT("Element"), {TEXT("All")});
     ReviewFilter = Choice(Browser, TEXT("Review status"), {TEXT("All"), TEXT("NotTested"), TEXT("Pass"), TEXT("Fail"), TEXT("NeedsOptimization"), TEXT("NeedsVisualRework"), TEXT("ProductionReady")});
@@ -289,18 +319,17 @@ void UVFXShowcaseWidget::RefreshCatalog()
 void UVFXShowcaseWidget::RebuildCategories()
 {
     UVerticalBox* Box = Categories->GetContentBox(); Box->ClearChildren();
-    UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(); Box->AddChildToVerticalBox(Row);
-    for (const FString& Name : {TEXT("All"), TEXT("Favorites"), TEXT("Recent"), TEXT("Failed"), TEXT("Unreviewed")})
-    {
-        UButton* Button = ActionButton(Row, Name, TEXT("Category:") + Name);
-        if (SelectedCategory == Name) Button->SetBackgroundColor(Accent);
-    }
-    UHorizontalBox* CatalogRow = WidgetTree->ConstructWidget<UHorizontalBox>(); Box->AddChildToVerticalBox(CatalogRow);
     for (const FVFXShowcaseCategoryProgress& Progress : Controller->GetCategories())
     {
-        const FString Name = EnumName(Progress.Category);
+        // The controller's Unspecified row is the aggregate, not a second category.
+        const FString Name = Progress.Category == EVFXCategory::Unspecified ? TEXT("All") : EnumName(Progress.Category);
         const FString State = Progress.Failed > 0 ? TEXT("Failed") : (Progress.Total > 0 && Progress.Ready == Progress.Total ? TEXT("Ready") : TEXT("Needs review"));
-        UButton* Button = ActionButton(CatalogRow, FString::Printf(TEXT("%s\n%d / %d reviewed\n%s"), *Name, Progress.Reviewed, Progress.Total, *State), TEXT("Category:") + Name);
+        UButton* Button = ActionButton(Box, FString::Printf(TEXT("%s · %d entries\n%d / %d reviewed · %s"), *Name, Progress.Total, Progress.Reviewed, Progress.Total, *State), TEXT("Category:") + Name);
+        if (SelectedCategory == Name) Button->SetBackgroundColor(Accent);
+    }
+    for (const FString& Name : {TEXT("Favorites"), TEXT("Recent"), TEXT("Failed"), TEXT("Unreviewed")})
+    {
+        UButton* Button = ActionButton(Box, Name, TEXT("Category:") + Name);
         if (SelectedCategory == Name) Button->SetBackgroundColor(Accent);
     }
 }

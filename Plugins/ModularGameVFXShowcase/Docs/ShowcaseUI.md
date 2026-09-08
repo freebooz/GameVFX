@@ -6,7 +6,7 @@ The eight requested wrapper parent classes are in `VFXShowcaseWidget.h`: `VFXSho
 
 ## Browse and play
 
-The left browser reads category progress and metadata rows from the controller. Category buttons are generated from `GetCategories`; there are no per-category click handlers. The horizontal category strip scrolls, and the entry list scrolls vertically. Search, element, review status and sorting update the controller filter, so Previous, Next and Auto Preview follow the same filtered sequence.
+The left browser reads category progress and metadata rows from the controller. Category buttons are generated from `GetCategories`; there are no per-category click handlers. The controller's aggregate Unspecified row is displayed once as All, including its complete Catalog count. Both the category menu and entry list scroll vertically. Search, element, review status and sorting update the controller filter, so Previous, Next and Auto Preview follow the same filtered sequence. Entry captions use a defined wrap width and content padding so the button height includes every text line; long Inspector paths can wrap within an unbroken identifier.
 
 Click an entry to stop the prior single preview and play the new gameplay tag through the controller and formal VFX Manager. The UI never receives a Niagara system reference and never spawns one. Entry cards show display name, tag, element, form, priority, favorite and review status. The inspector shows metadata, development asset path, structural information and validation issues.
 

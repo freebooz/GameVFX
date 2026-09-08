@@ -127,13 +127,22 @@ void AVFXShowcaseEnvironment::SetBackground(EVFXShowcaseBackground Value)
     Light->SetLightColor(bBright?FLinearColor(1.f,.96f,.85f):Value==EVFXShowcaseBackground::Dark?FLinearColor(.25f,.35f,.6f):FLinearColor::White);
     for(UStaticMeshComponent* Mesh:ComplexMeshes) Mesh->SetVisibility(Value==EVFXShowcaseBackground::Complex);
 }
-void AVFXShowcaseEnvironment::SetCameraDistance(float DistanceCm){CameraDistance=FMath::Clamp(DistanceCm,250.f,5000.f);UpdateCamera();}
+void AVFXShowcaseEnvironment::SetCameraDistance(float DistanceCm){(bStressCamera?StressCameraDistance:CameraDistance)=FMath::Clamp(DistanceCm,250.f,5000.f);UpdateCamera();}
 void AVFXShowcaseEnvironment::FocusStress(bool bStress){bStressCamera=bStress;bEnvironmentCamera=false;UpdateCamera();}
+void AVFXShowcaseEnvironment::FrameStressGrid(int32 Columns,int32 Rows,float Spacing)
+{
+    const float Width=FMath::Max(Columns-1,0)*Spacing,Depth=FMath::Max(Rows-1,0)*Spacing;
+    StressFocus=GetStressPoint()-GetActorLocation()+FVector(Width*.5f+150.f,Depth*.5f,100.f);
+    // Frame the occupied grid inside the central viewport between the UI panels.
+    StressCameraDistance=FMath::Max(1600.f,FMath::Max(Width,Depth)*1.65f+1000.f);
+    FocusStress(true);
+}
 void AVFXShowcaseEnvironment::FocusEnvironment(){bStressCamera=false;bEnvironmentCamera=true;UpdateCamera();}
 void AVFXShowcaseEnvironment::UpdateCamera()
 {
-    const FVector Focus=bStressCamera?FVector(1000,5000,100):bEnvironmentCamera?FVector(2800,0,100):FVector(800,0,100);
-    const FVector Pos=Focus+FVector(-CameraDistance*.55,-CameraDistance,CameraDistance*.55);
+    const FVector Focus=bStressCamera?StressFocus:bEnvironmentCamera?FVector(2800,0,100):FVector(1000,0,100);
+    const float Distance=bStressCamera?StressCameraDistance:CameraDistance;
+    const FVector Pos=Focus+FVector(-Distance*.55,-Distance,Distance*.55);
     Camera->SetRelativeLocation(Pos);Camera->SetRelativeRotation((Focus-Pos).Rotation());
 }
 void AVFXShowcaseEnvironment::SetSurface(FName Surface)

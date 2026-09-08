@@ -356,8 +356,10 @@ void AVFXShowcaseController::SetSurface(FName Surface){if(Environment){Environme
 void AVFXShowcaseController::PlayStress(int32 Count)
 {
     bLoop=false;bAutoPreview=false;ClearPlayback(true);TestCount=ClampStressCount(Count);MotionElapsed=0;
-    if(Environment)Environment->FocusStress(true);
-    for(int32 I=0;I<TestCount;++I)SpawnPreview(SelectedTag,FVector(I%10*300,I/10*300,0),true);
+    const int32 Columns=FMath::CeilToInt(FMath::Sqrt(float(TestCount)));
+    const int32 Rows=FMath::DivideAndRoundUp(TestCount,Columns);
+    if(Environment)Environment->FrameStressGrid(Columns,Rows,300.f);
+    for(int32 I=0;I<TestCount;++I)SpawnPreview(SelectedTag,FVector(I%Columns*300,I/Columns*300,0),true);
     OnChanged.Broadcast();
 }
 void AVFXShowcaseController::PlayCompare(FGameplayTag OtherTag)
