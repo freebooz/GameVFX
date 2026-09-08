@@ -31,9 +31,9 @@ namespace
     template<typename T> FString EnumName(T Value) { return StaticEnum<T>()->GetNameStringByValue(static_cast<int64>(Value)); }
     template<typename T> FString EnumLabel(T Value) { return Chinese(EnumName(Value)); }
     template<typename T> T EnumValue(const FString& Value) { return static_cast<T>(StaticEnum<T>()->GetValueByNameString(Value)); }
-    FSlateFontInfo HudFont(FSlateFontInfo Font)
+    FSlateFontInfo HudFont(FSlateFontInfo Font, const UObject* Context)
     {
-        Font.Size = VFXShowcaseUI::FontSize;
+        Font.Size = VFXShowcaseUI::ViewportFontSize(Context);
         Font.OutlineSettings.OutlineSize = 1;
         Font.OutlineSettings.OutlineColor = FLinearColor(0, 0, 0, .8f);
         return Font;
@@ -51,9 +51,9 @@ namespace
         Style.PressedForeground = Accent; Style.DisabledForeground = FLinearColor(.55f, .65f, .7f);
         return Style;
     }
-    FEditableTextBoxStyle HudInputStyle(FEditableTextBoxStyle Style)
+    FEditableTextBoxStyle HudInputStyle(FEditableTextBoxStyle Style, const UObject* Context)
     {
-        Style.TextStyle.Font = HudFont(Style.TextStyle.Font);
+        Style.TextStyle.Font = HudFont(Style.TextStyle.Font, Context);
         // Slate dims the hint fill independently of its font outline. An opaque dark outline
         // overwhelms that dimmed fill, so editable text uses clean, explicit pale lettering.
         Style.TextStyle.Font.OutlineSettings.OutlineSize = 0;
@@ -124,7 +124,7 @@ UTextBlock* UVFXShowcaseWidget::Label(UVerticalBox* Box, const FString& Text)
 {
     UTextBlock* Result = WidgetTree->ConstructWidget<UTextBlock>();
     Result->SetText(FText::FromString(Chinese(Text)));
-    Result->SetFont(HudFont(Result->GetFont()));
+    Result->SetFont(HudFont(Result->GetFont(), this));
     Result->SetColorAndOpacity(TextColor);
     Result->SetAutoWrapText(true);
     Result->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
@@ -146,7 +146,7 @@ UButton* UVFXShowcaseWidget::ActionButton(UPanelWidget* Parent, const FString& T
     Button->SetBackgroundColor(FLinearColor::White);
     UTextBlock* Caption = WidgetTree->ConstructWidget<UTextBlock>();
     Caption->SetText(FText::FromString(Chinese(Text)));
-    Caption->SetFont(HudFont(Caption->GetFont()));
+    Caption->SetFont(HudFont(Caption->GetFont(), this));
     Caption->SetColorAndOpacity(TextColor);
     // A control caption must contribute its complete horizontal width to its WrapBox.
     // Only whole buttons wrap to the next row; Chinese captions never collapse to one glyph.
@@ -178,7 +178,7 @@ UComboBoxString* UVFXShowcaseWidget::Choice(UVerticalBox* Box, const FString& Ti
     UComboBoxString* Combo = WidgetTree->ConstructWidget<UComboBoxString>();
     // UE 5.8 exposes these as construction-only properties with getters and no runtime setters.
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
-    Combo->Font = HudFont(Combo->GetFont());
+    Combo->Font = HudFont(Combo->GetFont(), this);
     Combo->ForegroundColor = TextColor;
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
     // UE invokes this delegate for the selected value and every popup item; stored options remain stable English keys.
@@ -209,7 +209,7 @@ UWidget* UVFXShowcaseWidget::GenerateChoiceWidget(FString Option)
 {
     UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
     Text->SetText(FText::FromString(Chinese(Option)));
-    Text->SetFont(HudFont(Text->GetFont()));
+    Text->SetFont(HudFont(Text->GetFont(), this));
     Text->SetColorAndOpacity(TextColor);
     Text->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
     Text->SetWrapTextAt(245.f);
@@ -221,11 +221,11 @@ void UVFXShowcaseWidget::Number(UVerticalBox* Box, const FString& Name, const FS
     UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
     UTextBlock* Caption = WidgetTree->ConstructWidget<UTextBlock>();
     Caption->SetText(FText::FromString(Chinese(Name)));
-    Caption->SetFont(HudFont(Caption->GetFont()));
+    Caption->SetFont(HudFont(Caption->GetFont(), this));
     Caption->SetColorAndOpacity(TextColor);
     Row->AddChildToHorizontalBox(Caption)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     UVFXShowcaseNumber* Spin = WidgetTree->ConstructWidget<UVFXShowcaseNumber>();
-    Spin->SetFont(HudFont(Spin->GetFont()));
+    Spin->SetFont(HudFont(Spin->GetFont(), this));
     FSpinBoxStyle SpinStyle = Spin->GetWidgetStyle();
     SpinStyle.BackgroundBrush = HudBrush(.3f); SpinStyle.ActiveBackgroundBrush = HudBrush(.45f, 1.f);
     SpinStyle.HoveredBackgroundBrush = HudBrush(.4f, .8f);
@@ -273,7 +273,7 @@ void UVFXShowcaseWidget::BuildWorkbench()
     Body->AddChildToHorizontalBox(BrowserSize);
     Search = WidgetTree->ConstructWidget<UEditableTextBox>();
     Search->SetHintText(FText::FromString(TEXT("搜索名称／标签")));
-    Search->SetWidgetStyle(HudInputStyle(Search->GetWidgetStyle()));
+    Search->SetWidgetStyle(HudInputStyle(Search->GetWidgetStyle(), this));
     Search->SetForegroundColor(TextColor);
     Search->OnTextChanged.AddDynamic(this, &UVFXShowcaseWidget::SearchChanged);
     Browser->AddChildToVerticalBox(Search);
@@ -369,11 +369,11 @@ void UVFXShowcaseWidget::BuildWorkbench()
     ReasonChoice = Choice(ReviewBox, TEXT("Failure reason"), {TEXT("None"), TEXT("WeakVisual"), TEXT("WeakImpact"), TEXT("PoorLayering"), TEXT("ColorIssue"), TEXT("ExcessiveBloom"), TEXT("Occlusion"), TEXT("LifetimeIssue"), TEXT("Overdraw"), TEXT("TooManyParticles"), TEXT("HighCost"), TEXT("VRIssue"), TEXT("WrongCategory"), TEXT("CatalogIssue"), TEXT("Other")});
     Notes = WidgetTree->ConstructWidget<UMultiLineEditableTextBox>();
     Reviewer = WidgetTree->ConstructWidget<UEditableTextBox>();
-    Reviewer->SetWidgetStyle(HudInputStyle(Reviewer->GetWidgetStyle()));
+    Reviewer->SetWidgetStyle(HudInputStyle(Reviewer->GetWidgetStyle(), this));
     Reviewer->SetForegroundColor(TextColor);
     Reviewer->SetHintText(FText::FromString(TEXT("评审人姓名（验收证据必填）")));
     ReviewBox->AddChildToVerticalBox(Reviewer);
-    Notes->WidgetStyle = HudInputStyle(Notes->WidgetStyle);
+    Notes->WidgetStyle = HudInputStyle(Notes->WidgetStyle, this);
     Notes->SetForegroundColor(TextColor);
     Notes->SetHintText(FText::FromString(TEXT("填写本次验收项的证据与观察记录")));
     USizeBox* NoteSize = WidgetTree->ConstructWidget<USizeBox>(); NoteSize->SetHeightOverride(100); NoteSize->SetContent(Notes);
@@ -716,10 +716,42 @@ void UVFXShowcaseWidget::UpdateTelemetry()
     bUpdating = false;
 }
 
+void UVFXShowcaseWidget::RefreshFontScale()
+{
+    const float Size=VFXShowcaseUI::ViewportFontSize(this);
+    if(FMath::IsNearlyEqual(Size,LastFontSize))return;
+    LastFontSize=Size;
+    TArray<UUserWidget*> Pending={this};TSet<UUserWidget*> Visited;
+    while(!Pending.IsEmpty())
+    {
+        UUserWidget* Container=Pending.Pop();
+        if(!Container||!Container->WidgetTree||Visited.Contains(Container))continue;
+        Visited.Add(Container);TArray<UWidget*> Widgets;Container->WidgetTree->GetAllWidgets(Widgets);
+        for(UWidget* Control:Widgets)
+        {
+            if(UUserWidget* Nested=Cast<UUserWidget>(Control))Pending.Add(Nested);
+            if(UTextBlock* Text=Cast<UTextBlock>(Control))Text->SetFont(HudFont(Text->GetFont(),this));
+            else if(UEditableTextBox* Edit=Cast<UEditableTextBox>(Control))
+            {
+                // UE 5.8 Slate retains the argument's address: use widget-owned storage.
+                Edit->WidgetStyle=HudInputStyle(Edit->GetWidgetStyle(),this);
+                Edit->SetWidgetStyle(Edit->WidgetStyle);
+            }
+            else if(UMultiLineEditableTextBox* MultiEdit=Cast<UMultiLineEditableTextBox>(Control))
+            {
+                MultiEdit->WidgetStyle=HudInputStyle(MultiEdit->WidgetStyle,this);
+                MultiEdit->SetTextStyle(MultiEdit->WidgetStyle.TextStyle);
+            }
+            else if(USpinBox* Spin=Cast<USpinBox>(Control))Spin->SetFont(HudFont(Spin->GetFont(),this));
+        }
+    }
+}
+
 void UVFXShowcaseWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
 {
     Super::NativeTick(Geometry, DeltaTime);
     if (!IsValid(Controller)) return;
+    RefreshFontScale();
     if (CachedTag != Controller->SelectedTag) { RefreshSelection(); RebuildEntries(); }
     const double Now = FPlatformTime::Seconds();
     if (Now - LastTelemetryTime >= .25) { LastTelemetryTime = Now; UpdateTelemetry(); }

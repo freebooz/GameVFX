@@ -78,8 +78,11 @@ def tests():
  check('W runs along character heading',mp.get_velocity().x>375,mp.get_velocity().x)
  key('W',False);yield .3
  pos=mp.get_actor_location();key('D',True);yield .5
- check('D turns in place',yd(mp.get_actor_rotation().yaw,0)>35 and (mp.get_actor_location()-pos).length()<2)
+ check('D strafes right without turning',yd(mp.get_actor_rotation().yaw,0)<.1 and mp.get_actor_location().y-pos.y>100 and abs(mp.get_actor_location().x-pos.x)<2)
  key('D',False);yield .2
+ pos=mp.get_actor_location();key('A',True);yield .5
+ check('A strafes left without turning',yd(mp.get_actor_rotation().yaw,0)<.1 and pos.y-mp.get_actor_location().y>100)
+ key('A',False);yield .2
  reset();yield .2
  key('E',True);yield .5
  anim=mp.current_locomotion.get_name()

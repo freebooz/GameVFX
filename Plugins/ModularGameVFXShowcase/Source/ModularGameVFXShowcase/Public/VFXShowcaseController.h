@@ -90,6 +90,7 @@ private:
     TArray<TWeakObjectPtr<USceneComponent>> CombatScreenAnchors;
     FVFXShowcasePerformance Performance;
     double LastTickTime = 0;
+    float ResourceUpdateElapsed = 0;
     float SequenceElapsed = 0;
     float MotionElapsed = 0;
     int32 TestCount = 0;
@@ -99,6 +100,7 @@ private:
     bool bChangedTimeDilation = false;
     EVFXShowcaseMotion CurrentMotion = EVFXShowcaseMotion::SwingHorizontal;
     TMap<FGuid, TWeakObjectPtr<USceneComponent>> MovingAnchors;
+    TMap<FGuid, TWeakObjectPtr<USceneComponent>> PreviewHandleAnchors;
     TMap<FGuid, float> AnchorStartTimes;
     TMap<FGuid, FVector> AnchorStartLocations;
     TMap<FGuid, FVector> AnchorTargetLocations;
@@ -110,6 +112,7 @@ private:
     void CaptureSmokeStage(const FString& Stage, bool bScreenshot);
     FVFXHandle SpawnPreview(FGameplayTag Tag, const FVector& Offset, bool bStress);
     void ClearPlayback(bool bImmediate);
+    void CleanupFinishedPreviews();
     void ApplyHUDInteraction();
     bool RejectCombatWorldControl();
     void Advance(int32 Direction);

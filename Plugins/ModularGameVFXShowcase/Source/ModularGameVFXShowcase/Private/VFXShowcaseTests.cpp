@@ -134,6 +134,15 @@ bool FVFXShowcasePreviewRegressionTest::RunTest(const FString&)
                 ++Anchors;TestTrue(TEXT("Stress projectile reaches its actual advertised 3D target"),Component->GetComponentLocation().Equals(Environment->GetStressPoint()+FVector(300,0,100),.01));
             }
         TestEqual(TEXT("Single projectile has one movement anchor"),Anchors,1);
+        // Completion can originate outside the controller (natural Niagara completion
+        // or a manager stop). Its bookkeeping must not retain a dead preview.
+        UModularGameVFXBlueprintLibrary::StopAllVFXForOwner(Controller,Controller,true);
+        Controller->Tick(.3f);
+        Components.Reset();Controller->GetComponents<USceneComponent>(Components);
+        Anchors=0;
+        for(USceneComponent* Component:Components)
+            if(Component!=Controller->GetRootComponent()&&Component->GetClass()==USceneComponent::StaticClass())++Anchors;
+        TestEqual(TEXT("Finished preview releases its anchor without replay"),Anchors,0);
         Controller->Stop(true);
     }
     Controller->Destroy();Environment->Destroy();Instance->Shutdown();GEngine->DestroyWorldContext(World);World->DestroyWorld(false);Instance->RemoveFromRoot();return true;

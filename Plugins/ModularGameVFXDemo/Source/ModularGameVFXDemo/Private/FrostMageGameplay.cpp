@@ -66,11 +66,11 @@ const FSlateFontInfo& CombatFont(){
  static const FSlateFontInfo Font=[](){
   static TStrongObjectPtr<UFont> RuntimeFont(NewObject<UFont>(GetTransientPackage(),NAME_None,RF_Transient));
   RuntimeFont->FontCacheType=EFontCacheType::Runtime;
-  RuntimeFont->LegacyFontSize=12;
+  RuntimeFont->LegacyFontSize=9;
   FCompositeFont& Composite=RuntimeFont->GetMutableInternalCompositeFont();
   Composite.DefaultTypeface.Fonts.Emplace(NAME_None,FPaths::EngineContentDir()/TEXT("Slate/Fonts/Roboto-Regular.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
   Composite.FallbackTypeface.Typeface.Fonts.Emplace(NAME_None,FPaths::EngineContentDir()/TEXT("Slate/Fonts/DroidSansFallback.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
-  return FSlateFontInfo(RuntimeFont.Get(),12.f);
+  return FSlateFontInfo(RuntimeFont.Get(),9.f);
  }();
  return Font;
 }
@@ -115,7 +115,8 @@ bool AFMFrostMonster::ApplySpellDamage(float Damage){
 void AFMFrostMonster::StopAttack(){CastRemaining=0;if(IsValid(AttackCharge))AttackCharge->Deactivate();AttackCharge=nullptr;}
 void AFMFrostMonster::UpdateCombat(float D){
  auto* Player=Cast<AFMFrostMage>(UGameplayStatics::GetPlayerCharacter(this,0));
- bChasing=bCombatEnabled&&IsValid(Player)&&Player->Health>0&&GetDistanceTo(Player)<(bChasing?3600.f:2400.f);
+ // Damage arms retaliation; proximity alone must never acquire the player.
+ bChasing=bChasing&&bCombatEnabled&&IsValid(Player)&&Player->Health>0&&GetDistanceTo(Player)<3600.f;
  if(!bChasing){StopAttack();return;}
  AttackCooldown=FMath::Max(0.f,AttackCooldown-D);
  const FVector To=Player->GetActorLocation()-GetActorLocation();
@@ -393,12 +394,12 @@ void AFMPlayerController::PlayerTick(float D){Super::PlayerTick(D);auto* P=Cast<
  if(!bOrbiting&&bSmartCameraFollow&&CameraFollowDelay<=0&&P->GetVelocity().Size2D()>20){FRotator R=GetControlRotation();R.Yaw=FMath::FixedTurn(R.Yaw,P->GetActorRotation().Yaw,180.f*D);SetControlRotation(R);}
  P->CameraBoom->TargetArmLength=FMath::FInterpConstantTo(P->CameraBoom->TargetArmLength,ZoomGoal,D,600.f);P->GetMesh()->SetOwnerNoSee(P->CameraBoom->TargetArmLength<90.f);
  if(bRightMouseHeld)P->SetActorRotation(FRotator(0,GetControlRotation().Yaw,0));
- const float Turn=(IsInputKeyDown(EKeys::D)||IsInputKeyDown(EKeys::Right)?1.f:0.f)-(IsInputKeyDown(EKeys::A)||IsInputKeyDown(EKeys::Left)?1.f:0.f);
+ const float Turn=(IsInputKeyDown(EKeys::Right)?1.f:0.f)-(IsInputKeyDown(EKeys::Left)?1.f:0.f);
  if(!bRightMouseHeld&&Turn!=0&&P->Health>0){const float YawDelta=Turn*110.f*D;P->AddActorWorldRotation(FRotator(0,YawDelta,0));if(!bLeftMouseHeld){FRotator R=GetControlRotation();R.Yaw+=YawDelta;SetControlRotation(R);}}
  const bool ForwardKey=IsInputKeyDown(EKeys::W)||IsInputKeyDown(EKeys::Up),BackKey=IsInputKeyDown(EKeys::S)||IsInputKeyDown(EKeys::Down);
  if(ForwardKey||BackKey||(bLeftMouseHeld&&bRightMouseHeld)||P->Health<=0)bAutoRun=false;
  const float F=bLeftMouseHeld&&bRightMouseHeld?1.f:(ForwardKey||bAutoRun?1.f:0.f)-(BackKey?1.f:0.f);
- const float S=FMath::Clamp((IsInputKeyDown(EKeys::E)?1.f:0.f)-(IsInputKeyDown(EKeys::Q)?1.f:0.f)+(bRightMouseHeld?Turn:0.f),-1.f,1.f);P->SetMovementIntent(F,S);
+ const float S=FMath::Clamp((IsInputKeyDown(EKeys::D)||IsInputKeyDown(EKeys::E)?1.f:0.f)-(IsInputKeyDown(EKeys::A)||IsInputKeyDown(EKeys::Q)?1.f:0.f)+(bRightMouseHeld?Turn:0.f),-1.f,1.f);P->SetMovementIntent(F,S);
 }
 void AFMPlayerController::FlushPressedKeys(){Super::FlushPressedKeys();bLeftMouseHeld=bRightMouseHeld=bOrbiting=bAutoRun=false;bLeftMouseDragged=bRightMouseDragged=false;LeftMouseTravel=RightMouseTravel=0;bShowMouseCursor=true;SetCursorMode();}
 void AFMPlayerController::FMTestBolt(){if(auto* P=Cast<AFMFrostMage>(GetPawn()))P->CastFrostbolt();}
@@ -486,7 +487,7 @@ void AFMFrostHUD::DrawHUD(){Super::DrawHUD();if(!Canvas)return;auto* P=Cast<AFMF
  else if(P->ChilledRemaining>0)Label(TEXT("冰冷状态：移动减速"),36,148,1.f);
  if(P->Health<=0)Label(FString::Printf(TEXT("恢复中：%.1f秒"),P->RespawnRemaining),W/2-130,H/2,1.f,FLinearColor(1,.35f,.45f));
  if(P->StatusRemaining>0)Label(FM::ChineseStatus(P->StatusMessage),W/2-220,Y-79,1.f,FLinearColor(.66f,.86f,1));
- Label(W<1280?TEXT("W/S移动　A/D转向　Q/E平移　鼠标选敌/转向　滚轮缩放　F1调试"):TEXT("W/S移动　A/D转向　Q/E平移　左键选敌/视角　右键转向/攻击　双键前进　滚轮缩放　F1调试"),24,H-28,1.f);
+ Label(W<1280?TEXT("W/S移动　A/D平移　Q/E平移　鼠标选敌/转向　滚轮缩放　F1调试"):TEXT("W/S移动　A/D平移　Q/E平移　左键选敌/视角　右键转向/攻击　双键前进　滚轮缩放　F1调试"),24,H-28,1.f);
 }
 AFMFrostGameMode::AFMFrostGameMode(){DefaultPawnClass=AFMFrostMage::StaticClass();PlayerControllerClass=AFMPlayerController::StaticClass();HUDClass=AFMFrostHUD::StaticClass();}
 void AFMFrostGameMode::BeginPlay(){Super::BeginPlay();bool HasMonster=false;for(TActorIterator<AFMFrostMonster> I(GetWorld());I;++I)HasMonster=true;if(!HasMonster){FActorSpawnParameters P;P.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;GetWorld()->SpawnActor<AFMFrostMonster>(AFMFrostMonster::StaticClass(),FVector(700,0,122),FRotator(0,180,0),P);}}

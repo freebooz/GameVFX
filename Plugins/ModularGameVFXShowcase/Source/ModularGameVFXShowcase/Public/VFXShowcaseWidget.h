@@ -94,6 +94,7 @@ private:
     void RefreshSelection();
     void BuildParameters();
     void UpdateTelemetry();
+    void RefreshFontScale();
     bool SaveReview();
     UTextBlock* Label(UVerticalBox* Box, const FString& Text);
     UButton* ActionButton(UPanelWidget* Parent, const FString& Text, const FString& Action);
@@ -146,4 +147,5 @@ private:
     TSet<int32> DirtyReviewGates;
     bool bUpdating = false;
     double LastTelemetryTime = 0;
+    float LastFontSize = 0;
 };
