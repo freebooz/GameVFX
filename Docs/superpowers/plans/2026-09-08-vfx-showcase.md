@@ -55,7 +55,7 @@ continues before this plugin is enabled or new editor processes run.
 - [x] Fresh read-only validation passed 101 checks; no Showcase asset or review file was saved by the validation.
 - [x] All 8 native tests passed with actual D3D12 rendering enabled. One expected quality CVar priority warning was recorded. This includes 7 Showcase tests and the 15-reference Demo migration test.
 - [x] Core migration verification passed with 13 curated Niagara systems compiling and 12 legacy compile failures isolated in Prototype.
-- [ ] Inspect actual game screenshots and stop-count evidence from the opt-in smoke sequence.
+- [x] Inspected High, VRMobile and Stress10 actual game screenshots; widget dispatch succeeded and Stopped/Exit counts returned to zero. Evidence: Saved/ShowcaseSetup/render_validation.json. This is not human VFX acceptance.
 - [ ] Human visual/gameplay/performance review and target VR stereo/comfort checks. These require actual review evidence and must not be inferred from automated results.
 
 Implementation details, paths, assumptions and native Blueprint call flow are in `Plugins/ModularGameVFXShowcase/Documentation/Implementation.md`. The earlier null-RHI test attempt is preserved as historical evidence; Manager lifecycle requires a renderer to create real Niagara components.
