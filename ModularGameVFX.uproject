@@ -38,7 +38,7 @@
   ],
   "Modules": [
     {
-      "Name": "MythicVFXLab",
+      "Name": "ModularGameVFXHost",
       "Type": "Runtime",
       "LoadingPhase": "Default"
     }

@@ -1,6 +1,6 @@
 # 法师法术测试工程
 
-工程：`F:/game/MythicVFXLab/MythicVFXLab.uproject`
+工程：`F:/game/ModularGameVFX/ModularGameVFX.uproject`
 
 运行关卡：`/Game/FrostMage/Maps/L_FrostMage_Test`。第三人称，月光与黑色远景，角色附近保留柔和补光。
 

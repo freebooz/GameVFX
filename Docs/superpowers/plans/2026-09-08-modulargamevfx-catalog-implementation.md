@@ -45,7 +45,7 @@
 - Rename: `Plugins/MythicVFX/MythicVFX.uplugin` → `Plugins/ModularGameVFX/ModularGameVFX.uplugin`
 - Rename: `Plugins/MythicVFXDemo` → `Plugins/ModularGameVFXDemo`
 - Rename: `Plugins/MythicVFXDemo/MythicVFXDemo.uplugin` → `Plugins/ModularGameVFXDemo/ModularGameVFXDemo.uplugin`
-- Modify: `MythicVFXLab.uproject`
+- Modify: `ModularGameVFX.uproject`
 - Backup: `Saved/ModuleRelease/BackupBeforeModularGameVFXCatalog/<timestamp>/`
 
 **Interfaces:**

@@ -10,7 +10,7 @@
 
 ## Constraints
 
-- Work in the user's explicitly named F:/game/MythicVFXLab project.
+- Work in the user's explicitly named F:/game/ModularGameVFX project.
 - H:/GameVFX/MythicVFXLab contains zero files; do not repeat the prior disk migration.
 - Coordinate with the active VFX task: this task owns asset migration, runtime taxonomy, tags and performance; that task owns its existing document generator.
 - Back up before mutation, never overwrite a destination asset, and preserve existing authored performance settings.

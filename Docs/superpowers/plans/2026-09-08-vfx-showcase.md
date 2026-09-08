@@ -1,7 +1,7 @@
 # ModularGameVFX Showcase implementation
 
 The user's September 8 Showcase attachment is the implementation specification.
-Use the explicitly named project F:/game/MythicVFXLab. Existing asset migration
+Use the explicitly named project F:/game/ModularGameVFX. Existing asset migration
 continues before this plugin is enabled or new editor processes run.
 
 ## Architecture and decisions

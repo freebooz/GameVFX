@@ -6,7 +6,7 @@
 
 验收日期：2026-08-12  
 引擎：UE 5.8 源码编译版，`F:\UnrealEngine-5.8.0-release`  
-工程：`H:\GameVFX\MythicVFXLab\MythicVFXLab.uproject`
+工程：`H:\GameVFX\MythicVFXLab\ModularGameVFX.uproject`
 
 ## Textures Created
 
