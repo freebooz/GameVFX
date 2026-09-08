@@ -1,5 +1,7 @@
 import json
 import unittest
+import xml.etree.ElementTree as ET
+import zipfile
 from pathlib import Path
 
 
@@ -17,6 +19,13 @@ class ModularGameVFXCatalogDocumentTest(unittest.TestCase):
         for suffix in (".json", ".csv", ".md", ".xlsx", ".xlsx.inspect.ndjson"):
             self.assertTrue(Path(f"{CATALOG_BASE}{suffix}").is_file(), suffix)
         self.assertTrue((DOCUMENTATION_ROOT / "ModularGameVFX_1.0.0_Asset_Migration_Catalog.csv").is_file())
+        with zipfile.ZipFile(Path(f"{CATALOG_BASE}.xlsx")) as archive:
+            workbook = ET.fromstring(archive.read("xl/workbook.xml"))
+            ns = {"x": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+            self.assertEqual(
+                ["分类规范", "Core原子", "Metadata", "演示法术", "生产Niagara", "既有库迁移", "资产概览", "资产总表"],
+                [sheet.attrib["name"] for sheet in workbook.findall("x:sheets/x:sheet", ns)],
+            )
 
     def test_functional_taxonomy_is_complete_and_ordered(self):
         expected = ["00_Core"] + [
@@ -57,20 +66,31 @@ class ModularGameVFXCatalogDocumentTest(unittest.TestCase):
 
     def test_asset_paths_use_modular_mount_and_declared_library_root(self):
         for row in self.data["components"] + self.data["legacyLibrary"]:
-            self.assertTrue(row["当前兼容路径"].startswith("/ModularGameVFX/"))
+            self.assertNotIn("当前兼容路径", row)
+            self.assertTrue(row["历史来源路径"].startswith("/ModularGameVFX/"))
             self.assertTrue(row["标准目标路径"].startswith(self.data["libraryRoot"] + "/"))
-            self.assertNotIn("/MythicVFX/", row["当前兼容路径"])
+            self.assertNotIn("/MythicVFX/", row["历史来源路径"])
             self.assertNotIn("/MythicVFX/", row["标准目标路径"])
 
     def test_authoritative_manifest_inventory_is_complete_and_truthful(self):
         assets = self.data["assetInventory"]
         self.assertEqual(1059, len(assets))
-        self.assertEqual(1059, len({row["当前兼容路径"] for row in assets}))
+        self.assertEqual(1059, len({row["历史来源路径"] for row in assets}))
         self.assertEqual(1059, len({row["标准目标路径"] for row in assets}))
         self.assertEqual(36, sum(row["资产类型"] == "NiagaraSystem" for row in assets))
         self.assertEqual(13, sum(row["正式效果"] == "是" for row in assets))
         marker = PLUGIN_ROOT.parents[1] / "Saved" / "TaxonomyMigration" / "migration_complete.json"
         self.assertEqual(marker.is_file(), self.data["migrationComplete"])
+        self.assertEqual("1.3.0", self.data["schemaVersion"])
+        self.assertEqual({"Review": 13, "Prototype": 23, "ProductionReady": 0, "visualReview": "NotTested", "gpuProfile": "NotRun"}, self.data["qualityState"])
+        self.assertEqual(13, len(self.data["components"]))
+        self.assertEqual(23, len(self.data["legacyLibrary"]))
+        self.assertTrue(all("建议策略，未绑定" in row["Effect Type"] for row in self.data["legacyLibrary"]))
+        self.assertTrue(all(row["Catalog 状态"] == "Prototype_RequiresValidation" for row in self.data["legacyLibrary"]))
+        self.assertTrue(all("当前兼容路径" not in row for row in assets))
+        if marker.is_file():
+            self.assertTrue(all(row["Catalog 状态"] == "Registered_Review" for row in self.data["components"]))
+            self.assertTrue(all("旧路径已移除" in row["资产迁移状态"] for row in assets))
         if not marker.is_file():
             self.assertTrue(all("未迁移" in row["资产迁移状态"] for row in assets))
 

@@ -45,6 +45,8 @@ Preview Profile 可覆盖分类推导的播放方式。Cast/Status 使用附着�
 
 五档质量索引统一为 `0=VRMobile`、`1=Low`、`2=Medium`、`3=High`（UE Epic 基础档）、`4=Cinematic`，与四个 Effect Type 的五个质量 mask 对齐。Preview Profile 本身只保存展示方式与时长距离，不另造一套质量索引。
 
+质量预览使用每个 Controller 独有的临时 CVar 标签；结束播放场景时撤销该标签，恢复引擎原有值及设置来源。Projectile 与 Beam 才推导端点参数；显式输入或 Catalog 已定义的 `User.Length` 保留。每个 Projectile 实例保存自己的 Source/Target，压力测试使用相同端点插值。Surface 类及明确的表面 TargetType 使用当前测试墙/地面的真实面位置和法线；切换表面后重新播放。
+
 Single、Compare、Stress 和组合测试的调用由 Controller 管理。压力测试支持 1～100 的边界，选择菜单为 1/5/10/20/50/100。播放、Replay、Stop、立即停止、Loop 与 Auto Preview 的生命周期必须在 Game/PIE 环境检验，不能只凭 Editor world 中创建了 Actor 判定通过。
 
 ## 评审门禁与证据
@@ -52,6 +54,8 @@ Single、Compare、Stress 和组合测试的调用由 Controller 管理。压力
 Visual、Gameplay、Performance 是人工主评审项；Naming、Catalog、Dependency 是技术准入项。只有六项均有与当前资产版本匹配的真实通过证据，才能标记 ProductionReady。快速三个 PASS 不能绕过已有六项生产门禁。
 
 Review 保存的是独立评审数据，不修改正式 Niagara 资产。SaveReviews 是明确的持久化操作；模板评分与自动化测试中的合成证据不是用户真实评审。未取得实机 Profile 时保留“尚待实机 Profile”，CPU/GPU/粒子成本不能填假数。
+
+“保持当前状态”仅通过 `SetReviewNotes` 修改备注与失败原因，不刷新既有门禁证据的资产版本，也不改写门禁结果。UI 仅提交用户实际修改的门禁；历史证据以原记录显示，避免将打开评审面板等同于重新审批。
 
 ## 构建、生成与检查
 
@@ -65,6 +69,24 @@ Review 保存的是独立评审数据，不修改正式 Niagara 资产。SaveRev
 生成脚本重复运行时复用已有正确父类的 wrapper，保留已有 Profile 条目及自定义设置，只追加缺失 Tag；更新本脚本管理的场景绑定，不删除用户额外场景对象。已有同名资产或场景对象父类不匹配时失败并记录，避免静默覆盖。
 
 两个脚本只保存新 Showcase 插件中明确负责的资产与自身报告，不保存核心/旧 Demo 内容，不使用 SaveAll，不伪造 `.uasset`。结构验收使用新建临时 Actor，合成六门禁测试不调用 SaveReviews，完成后销毁临时 Actor。
+
+## 可选自动渲染冒烟检查
+
+仅在明确传入 `-VFXShowcaseSmokeTest` 时，Controller 才启动以下序列。使用已生成的 `/ModularGameVFXShowcase/Maps/L_VFX_Showcase` 进入 Game；截图需要真实渲染窗口，NullRHI 不提供画面验收证据。时间从 Controller BeginPlay 开始，以游戏计时器为准。
+
+| 时间 | 自动操作 | Saved/ShowcaseSetup 输出 |
+| --- | --- | --- |
+| 5 秒 + 0.15 秒 | 选择通过 Catalog 校验的 Impact，High 播放后请求截图 | `Showcase_High.png`、`Showcase_High.json` |
+| 10 秒 + 0.15 秒 | VRMobile 重播后请求截图 | `Showcase_VRMobile.png`、`Showcase_VRMobile.json` |
+| 15 秒 + 0.15 秒 | High 档压力播放 10 个实例后请求截图 | `Showcase_Stress10.png`、`Showcase_Stress10.json` |
+| 20 秒 | 立即停止并读取 Manager 数量 | `Showcase_Stopped.json` |
+| 22 秒 | 记录退出前数量，正常请求关闭进程 | `Showcase_Exit.json` |
+
+JSON 记录当时 `GetPerformance()` 的帧时间、FPS、Manager/活动系统数量、测试实例数、质量档及实际质量 CVar 值。`screenshotRequested=true` 只表示已向引擎提出请求；应检查真实 PNG 存在并打开确认，不能将请求当成成功截图。若没有有效 Impact，写 `Showcase_MissingImpact.json` 并跳过渲染阶段；最终仍停止和退出。异步资源加载可能晚于 0.15 秒，应结合画面、实际活动数量和日志判断，不以时间到达自动判为通过。
+
+自动序列使用弱引用计时器，Controller EndPlay 时取消；不调用评审设置或 SaveReviews。输出始终保留 `visualReview=NotTested` 与 `gpuProfile=NotRun`；帧时间/FPS 不是单个 Niagara 的 GPU 成本测量。
+
+原生 Automation 集合 `ModularGameVFXShowcase` 包含筛选组合、六项证据门禁、压力边界、Profile Tag 查找、Manager Owner 生命周期，以及 Surface/Projectile/质量恢复、备注保留门禁两项回归用例。后两项为本次修复新增，实际执行结果以统一构建后的 Automation 日志为准；源码存在不能代替测试通过。
 
 ## 当前证据的解释
 

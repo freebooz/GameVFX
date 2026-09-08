@@ -65,7 +65,7 @@ bool FVFXShowcaseLifecycleTest::RunTest(const FString&)
     UGameInstance* Instance=NewObject<UGameInstance>(GEngine);Instance->AddToRoot();Instance->InitializeStandalone(FName(TEXT("VFXShowcaseLifecycleTest")));
     UWorld* World=Instance->GetWorld();
     if(!World){AddError(TEXT("Standalone GameInstance did not create a world."));Instance->Shutdown();Instance->RemoveFromRoot();return false;}
-    UObject* OwnerA=NewObject<UObject>(Instance);UObject* OwnerB=NewObject<UObject>(Instance);
+    UObject* OwnerA=NewObject<USceneComponent>(Instance);UObject* OwnerB=NewObject<USceneComponent>(Instance);
     FVFXPlayRequest Request;Request.VFXTag=Catalog->Entries[0].VFXTag;Request.Owner=OwnerA;
     const FVFXHandle HandleA=UModularGameVFXBlueprintLibrary::PlayVFX(World,Request,FOnModularVFXReady());
     Request.Owner=OwnerB;

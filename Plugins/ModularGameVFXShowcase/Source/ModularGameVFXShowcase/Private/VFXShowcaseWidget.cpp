@@ -190,7 +190,7 @@ void UVFXShowcaseWidget::BuildWorkbench()
     UVerticalBox* StageFooter = WidgetTree->ConstructWidget<UVerticalBox>();
     SelectionText = Label(StageFooter, TEXT("No VFX selected"), 15);
     CompareText = Label(StageFooter, TEXT("Compare A: —  |  B: —"));
-    Label(StageFooter, TEXT("Select an entry for Single mode. Stress uses its own test zone.\nRight mouse + WASD: inspect the stage (when viewport has focus)."), 10);
+    Label(StageFooter, TEXT("Select an entry for Single mode. Stress uses its own test zone.\nUse the Camera distance controls to inspect near and far readability."), 10);
     Stage->AddChildToVerticalBox(Frame(WidgetTree, StageFooter));
 
     UVerticalBox* Details = WidgetTree->ConstructWidget<UVerticalBox>();

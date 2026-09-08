@@ -124,7 +124,7 @@ void AVFXShowcaseEnvironment::SetBackground(EVFXShowcaseBackground Value)
 {
     const bool bBright=Value==EVFXShowcaseBackground::Bright;
     Light->SetIntensity(Value==EVFXShowcaseBackground::Dark?.12f:bBright?10.f:4.f);
-    Light->SetLightColor(bBright?FLinearColor(1,.96,.85):Value==EVFXShowcaseBackground::Dark?FLinearColor(.25,.35,.6):FLinearColor::White);
+    Light->SetLightColor(bBright?FLinearColor(1.f,.96f,.85f):Value==EVFXShowcaseBackground::Dark?FLinearColor(.25f,.35f,.6f):FLinearColor::White);
     for(UStaticMeshComponent* Mesh:ComplexMeshes) Mesh->SetVisibility(Value==EVFXShowcaseBackground::Complex);
 }
 void AVFXShowcaseEnvironment::SetCameraDistance(float DistanceCm){CameraDistance=FMath::Clamp(DistanceCm,250.f,5000.f);UpdateCamera();}
