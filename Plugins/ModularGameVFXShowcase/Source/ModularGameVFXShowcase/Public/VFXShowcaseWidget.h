@@ -94,7 +94,7 @@ private:
     void BuildParameters();
     void UpdateTelemetry();
     bool SaveReview();
-    UTextBlock* Label(UVerticalBox* Box, const FString& Text, int32 Size=12);
+    UTextBlock* Label(UVerticalBox* Box, const FString& Text);
     UButton* ActionButton(UPanelWidget* Parent, const FString& Text, const FString& Action);
     UComboBoxString* Choice(UVerticalBox* Box, const FString& Title, const TArray<FString>& Options);
     void Number(UVerticalBox* Box, const FString& Name, const FString& Key, float Value, float Min, float Max);
@@ -102,6 +102,7 @@ private:
     UFUNCTION() void SearchChanged(const FText& Text);
     UFUNCTION() void EnvironmentChanged(FString Selection, ESelectInfo::Type Type);
     UFUNCTION() void ReviewGateChanged(FString Selection, ESelectInfo::Type Type);
+    UFUNCTION() UWidget* GenerateChoiceWidget(FString Option);
 
     UPROPERTY(Transient) TObjectPtr<UVFXShowcaseCategoryMenu> Categories;
     UPROPERTY(Transient) TObjectPtr<UVFXShowcaseEntryList> Entries;

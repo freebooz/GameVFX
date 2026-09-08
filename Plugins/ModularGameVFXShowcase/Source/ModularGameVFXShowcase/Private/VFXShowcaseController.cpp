@@ -1,6 +1,13 @@
-#include "VFXShowcaseController.h"
+﻿#include "VFXShowcaseController.h"
 #include "VFXShowcaseEnvironment.h"
 #include "VFXShowcaseWidget.h"
+#include "VFXShowcaseLocalization.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/ComboBoxString.h"
+#include "Components/EditableTextBox.h"
+#include "Components/MultiLineEditableTextBox.h"
+#include "Components/ScrollBox.h"
+#include "Components/TextBlock.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/IAssetRegistry.h"
 #include "VFXCatalog.h"
@@ -119,7 +126,7 @@ void AVFXShowcaseController::RefreshCatalog()
     if(Catalog.IsNull()) Catalog=DefaultCatalog;
     LoadedCatalog=Catalog.LoadSynchronous();
     AllEntries.Reset();
-    if(!LoadedCatalog){LastMessage=TEXT("Catalog missing. Configure Modular Game VFX DefaultCatalog.");OnChanged.Broadcast();return;}
+    if(!LoadedCatalog){LastMessage=TEXT("未找到特效目录，请配置模块化特效库的默认目录。");OnChanged.Broadcast();return;}
     LoadedCatalog->BuildRuntimeCache();
     LoadReviews();
     TMap<FGameplayTag,int32> Counts;
@@ -133,34 +140,36 @@ void AVFXShowcaseController::RefreshCatalog()
         Row.Priority=Entry.PerformanceClass;Row.SpawnMode=Entry.SpawnMode;Row.DefaultParameters=Entry.DefaultParameters;
         Row.Pooling=StaticEnum<ENCPoolMethod>()->GetNameStringByValue(int64(Entry.PoolingMethod));
         Row.PreviewMode=ResolveProfile(Entry).PreviewMode;
-        if(!Entry.VFXTag.IsValid()) Row.ValidationIssues.Add(TEXT("Invalid Tag"));
-        if(Counts.FindRef(Entry.VFXTag)>1) Row.ValidationIssues.Add(TEXT("Duplicate Tag"));
-        if(Entry.Category==EVFXCategory::Unspecified || !StaticEnum<EVFXCategory>()->IsValidEnumValue(int64(Entry.Category))) Row.ValidationIssues.Add(TEXT("Invalid Category"));
-        if(!Profile || !Profile->Find(Entry.VFXTag)) Row.ValidationIssues.Add(TEXT("Missing Preview Profile (metadata fallback active)"));
-        if(Catalog.ToSoftObjectPath()!=DefaultCatalog.ToSoftObjectPath()) Row.ValidationIssues.Add(TEXT("Catalog differs from Manager DefaultCatalog; playback disabled"));
+        if(!Entry.VFXTag.IsValid()) Row.ValidationIssues.Add(TEXT("标签无效"));
+        if(Counts.FindRef(Entry.VFXTag)>1) Row.ValidationIssues.Add(TEXT("标签重复"));
+        if(Entry.Category==EVFXCategory::Unspecified || !StaticEnum<EVFXCategory>()->IsValidEnumValue(int64(Entry.Category))) Row.ValidationIssues.Add(TEXT("分类无效"));
+        if(!Profile || !Profile->Find(Entry.VFXTag)) Row.ValidationIssues.Add(TEXT("缺少预览配置（已使用元数据默认值）"));
+        if(Catalog.ToSoftObjectPath()!=DefaultCatalog.ToSoftObjectPath()) Row.ValidationIssues.Add(TEXT("预览目录与管理器默认目录不一致，已停用播放"));
         if(UNiagaraSystem* System=Entry.NiagaraSystem.LoadSynchronous())
         {
             Row.EmitterCount=System->GetEmitterHandles().Num();
-            Row.EffectType=System->GetEffectType()?System->GetEffectType()->GetPathName():TEXT("Missing");
-            if(!System->GetEffectType()) Row.ValidationIssues.Add(TEXT("Missing Effect Type"));
-            Row.FixedBounds=System->GetFixedBounds().ToString();
+            Row.EffectType=System->GetEffectType()?System->GetEffectType()->GetPathName():TEXT("未配置");
+            if(!System->GetEffectType()) Row.ValidationIssues.Add(TEXT("缺少效果类型"));
+            const FBox Bounds=System->GetFixedBounds();
+            Row.FixedBounds=FString::Printf(TEXT("有效：%s；最小值（%.1f，%.1f，%.1f）；最大值（%.1f，%.1f，%.1f）"),
+                Bounds.IsValid?TEXT("是"):TEXT("否"),Bounds.Min.X,Bounds.Min.Y,Bounds.Min.Z,Bounds.Max.X,Bounds.Max.Y,Bounds.Max.Z);
             bool bCPU=false,bGPU=false;
             for(const FNiagaraEmitterHandle& Handle:System->GetEmitterHandles())
             {
                 if(const FVersionedNiagaraEmitterData* Data=Handle.GetInstance().GetEmitterData())
                 {bCPU|=Data->SimTarget==ENiagaraSimTarget::CPUSim;bGPU|=Data->SimTarget==ENiagaraSimTarget::GPUComputeSim;}
             }
-            Row.SimulationTarget=bCPU&&bGPU?TEXT("CPU + GPU"):bGPU?TEXT("GPU"):bCPU?TEXT("CPU"):TEXT("Unavailable");
+            Row.SimulationTarget=bCPU&&bGPU?TEXT("CPU + GPU"):bGPU?TEXT("GPU"):bCPU?TEXT("CPU"):TEXT("未获取");
             TArray<FNiagaraVariable> Variables; System->GetExposedParameters().GetParameters(Variables);
             for(const FNiagaraVariable& Variable:Variables) Row.SupportedParameters.Add(Variable.GetName());
         }
-        else Row.ValidationIssues.Add(TEXT("Missing Niagara"));
+        else Row.ValidationIssues.Add(TEXT("缺少粒子系统"));
         AllEntries.Add(MoveTemp(Row));
     }
     UpdateReviewRows();
     if(!FindRow(SelectedTag)) SelectedTag=AllEntries.Num()?AllEntries[0].VFXTag:FGameplayTag();
     if(const FVFXShowcaseEntry* Row=FindRow(SelectedTag)) Parameters=Row->DefaultParameters;
-    LastMessage=FString::Printf(TEXT("Catalog refreshed: %d entries. Reviews require six evidence-backed approvals."),AllEntries.Num());
+    LastMessage=FString::Printf(TEXT("特效目录已刷新：共 %d 项。正式验收需六项检查及对应证据。"),AllEntries.Num());
     OnChanged.Broadcast();
 }
 FVFXShowcaseProfileEntry AVFXShowcaseController::ResolveProfile(const FVFXCatalogEntry& Entry) const
@@ -220,7 +229,7 @@ bool AVFXShowcaseController::GetSelectedEntry(FVFXShowcaseEntry& Entry) const
 {if(const FVFXShowcaseEntry* Found=FindRow(SelectedTag)){Entry=*Found;return true;}return false;}
 bool AVFXShowcaseController::SelectEntry(FGameplayTag Tag,bool bPlay)
 {
-    if(!FindRow(Tag)){LastMessage=TEXT("Selection rejected: tag not present in this catalog.");return false;}
+    if(!FindRow(Tag)){LastMessage=TEXT("无法选择：当前目录中不存在此标签。");return false;}
     ClearPlayback(true);SelectedTag=Tag;CompareTag=FGameplayTag();
     Parameters=FindRow(Tag)->DefaultParameters;
     if(LoadedCatalog) if(const FVFXCatalogEntry* Entry=LoadedCatalog->FindEntryNative(Tag)) PreviewDistance=ResolveProfile(*Entry).PreviewDistance;
@@ -244,12 +253,12 @@ void AVFXShowcaseController::ClearPlayback(bool bImmediate)
     TestCount=0;
 }
 void AVFXShowcaseController::Stop(bool bImmediate)
-{bLoop=false;bAutoPreview=false;ClearPlayback(bImmediate);LastMessage=bImmediate?TEXT("Stopped immediately."):TEXT("Stopped; allowing system completion.");OnChanged.Broadcast();}
+{bLoop=false;bAutoPreview=false;ClearPlayback(bImmediate);LastMessage=bImmediate?TEXT("已立即停止。"):TEXT("已停止新增播放，正在等待现有效果自然结束。");OnChanged.Broadcast();}
 FVFXHandle AVFXShowcaseController::SpawnPreview(FGameplayTag Tag,const FVector& Offset,bool bStress)
 {
     if(!GetWorld()||!GetWorld()->GetGameInstance()||!Environment||!LoadedCatalog)return FVFXHandle();
     if(Catalog.ToSoftObjectPath()!=GetDefault<UModularGameVFXSettings>()->DefaultCatalog.ToSoftObjectPath())
-    {LastMessage=TEXT("Playback blocked: Showcase catalog must equal Manager DefaultCatalog.");return FVFXHandle();}
+    {LastMessage=TEXT("无法播放：展示目录必须与管理器默认目录一致。");return FVFXHandle();}
     const FVFXCatalogEntry* Entry=LoadedCatalog->FindEntryNative(Tag);if(!Entry)return FVFXHandle();
     const FVFXShowcaseProfileEntry Preview=ResolveProfile(*Entry);
     FVFXPlayRequest Request;Request.VFXTag=Tag;Request.Owner=this;Request.ParameterOverrides=Tag==SelectedTag?Parameters:Entry->DefaultParameters;
@@ -302,18 +311,18 @@ FVFXHandle AVFXShowcaseController::SpawnPreview(FGameplayTag Tag,const FVector& 
     const FVFXHandle Handle=UModularGameVFXBlueprintLibrary::PlayVFX(this,Request,Callback);
     if(Handle.IsValid())
     {
-        Handles.Add(Handle);LastMessage=TEXT("Requested through GameplayTag -> Catalog -> VFX Manager.");
+        Handles.Add(Handle);LastMessage=TEXT("已通过游戏标签、特效目录和特效管理器请求播放。");
         if(Anchor&&Preview.PreviewMode==EVFXPreviewMode::Projectile){MovingAnchors.Add(Handle.Id,Anchor);AnchorStartTimes.Add(Handle.Id,MotionElapsed);AnchorStartLocations.Add(Handle.Id,Source);AnchorTargetLocations.Add(Handle.Id,Target);}
     }
     return Handle;
 }
 void AVFXShowcaseController::OnVFXReady(FVFXHandle Handle,bool bSuccess)
-{LastMessage=bSuccess?TEXT("VFX Manager confirmed successful spawn."):TEXT("VFX Manager failed to spawn selected tag; inspect catalog/asset validation.");OnChanged.Broadcast();}
+{LastMessage=bSuccess?TEXT("特效管理器已确认效果创建成功。"):TEXT("特效创建失败，请检查所选标签的目录配置与资产验证结果。");OnChanged.Broadcast();}
 void AVFXShowcaseController::SetLoop(bool bEnabled)
 {
     bLoop=bEnabled;
     if(LoadedCatalog)if(const FVFXCatalogEntry* Entry=LoadedCatalog->FindEntryNative(SelectedTag))
-        if(bLoop&&!ResolveProfile(*Entry).bLoopAllowed){bLoop=false;LastMessage=TEXT("Loop disabled by preview profile.");}
+        if(bLoop&&!ResolveProfile(*Entry).bLoopAllowed){bLoop=false;LastMessage=TEXT("当前预览配置不允许循环播放。");}
     if(bLoop){bAutoPreview=false;Replay();}OnChanged.Broadcast();
 }
 void AVFXShowcaseController::SetAutoPreview(bool bEnabled){bAutoPreview=bEnabled;if(bEnabled){bLoop=false;Replay();}OnChanged.Broadcast();}
@@ -350,7 +359,7 @@ void AVFXShowcaseController::SetBackground(EVFXShowcaseBackground NewBackground)
 void AVFXShowcaseController::SetPlaybackSpeed(float Speed){PlaybackSpeed=FMath::Clamp(Speed,.1f,1.f);UGameplayStatics::SetGlobalTimeDilation(this,PlaybackSpeed);bChangedTimeDilation=true;OnChanged.Broadcast();}
 void AVFXShowcaseController::SetPreviewDistance(float DistanceCm){PreviewDistance=FMath::Clamp(DistanceCm,100.f,5000.f);if(Environment&&Environment->Target)Environment->Target->SetActorLocation(Environment->GetTargetPoint(PreviewDistance));Replay();}
 void AVFXShowcaseController::SetCameraDistance(float DistanceCm){if(Environment)Environment->SetCameraDistance(DistanceCm);}
-void AVFXShowcaseController::SetVRPreview(bool bEnabled){bVRPreview=bEnabled;if(bEnabled)SetQuality(EVFXShowcaseQuality::VRMobile);LastMessage=TEXT("VRMobile budget preview; actual headset, stereo and comfort review still required.");OnChanged.Broadcast();}
+void AVFXShowcaseController::SetVRPreview(bool bEnabled){bVRPreview=bEnabled;if(bEnabled)SetQuality(EVFXShowcaseQuality::VRMobile);LastMessage=TEXT("已切换虚拟现实移动端预算预览；头显双眼显示与舒适度仍需实机验收。");OnChanged.Broadcast();}
 void AVFXShowcaseController::SetMotion(EVFXShowcaseMotion Motion){CurrentMotion=Motion;MotionElapsed=0;}
 void AVFXShowcaseController::SetSurface(FName Surface){if(Environment){Environment->SetSurface(Surface);Replay();}}
 void AVFXShowcaseController::PlayStress(int32 Count)
@@ -449,7 +458,7 @@ bool AVFXShowcaseController::SetReviewGate(EVFXReviewGate Gate,EVFXGateResult Re
 {
     if(!StaticEnum<EVFXReviewGate>()->IsValidEnumValue(int64(Gate))||!StaticEnum<EVFXGateResult>()->IsValidEnumValue(int64(Result)))return false;
     if(Result!=EVFXGateResult::NotAssessed&&(Evidence.TrimStartAndEnd().IsEmpty()||Reviewer.TrimStartAndEnd().IsEmpty()))
-    {LastMessage=TEXT("Review rejected: a real evidence reference and reviewer/tool identity are required.");OnChanged.Broadcast();return false;}
+    {LastMessage=TEXT("无法记录评审：请填写真实证据及评审人或工具名称。");OnChanged.Broadcast();return false;}
     FVFXShowcaseReview* Review=FindOrAddReview(SelectedTag);if(!Review)return false;
     FVFXReviewEvidence* Item=Review->Gates.FindByPredicate([Gate](const FVFXReviewEvidence& G){return G.Gate==Gate;});
     if(!Item){FVFXReviewEvidence New;New.Gate=Gate;Review->Gates.Add(New);Item=&Review->Gates.Last();}
@@ -457,26 +466,26 @@ bool AVFXShowcaseController::SetReviewGate(EVFXReviewGate Gate,EVFXGateResult Re
     Review->TimestampUtc=Item->TimestampUtc;
     if(Result==EVFXGateResult::Failed)Review->Status=EVFXReviewStatus::Fail;
     else if(Review->Status==EVFXReviewStatus::ProductionReady&&!Review->IsProductionReady())Review->Status=EVFXReviewStatus::NotTested;
-    UpdateReviewRows();LastMessage=TEXT("Gate recorded in memory. Save Reviews to persist.");OnChanged.Broadcast();return true;
+    UpdateReviewRows();LastMessage=TEXT("检查结果已暂存，请点击“保存验收”写入文件。");OnChanged.Broadcast();return true;
 }
 bool AVFXShowcaseController::SetReviewStatus(EVFXReviewStatus Status,const FString& Notes,const FString& FailReason)
 {
     FVFXShowcaseReview* Review=FindOrAddReview(SelectedTag);if(!Review)return false;
     if(!StaticEnum<EVFXReviewStatus>()->IsValidEnumValue(int64(Status)))return false;
     if(Status==EVFXReviewStatus::ProductionReady&&!Review->IsProductionReady())
-    {LastMessage=TEXT("Final PASS blocked: Visual, Gameplay, Performance, Naming, Catalog and Dependency need current-version approval with evidence, reviewer and UTC time.");OnChanged.Broadcast();return false;}
+    {LastMessage=TEXT("暂不能标记为生产可用：视觉、玩法、性能、命名、目录与依赖六项检查均需当前版本的通过记录、证据、评审人和时间。");OnChanged.Broadcast();return false;}
     if(Status==EVFXReviewStatus::Pass)
     {
         for(EVFXReviewGate Gate:{EVFXReviewGate::Visual,EVFXReviewGate::Gameplay,EVFXReviewGate::Performance})
         {
             const FVFXReviewEvidence* Item=Review->Gates.FindByPredicate([Gate](const FVFXReviewEvidence& G){return G.Gate==Gate;});
             if(!Item||!Item->HasApproval(Review->AssetVersion))
-            {LastMessage=TEXT("PASS blocked: three human review gates require evidence. Production Ready additionally requires Naming, Catalog and Dependency.");OnChanged.Broadcast();return false;}
+            {LastMessage=TEXT("暂不能通过：视觉、玩法与性能三项人工评审需要证据；生产可用还需通过命名、目录与依赖检查。");OnChanged.Broadcast();return false;}
         }
     }
     Review->Status=Status;Review->Notes=Notes;Review->FailReason=FailReason;Review->TimestampUtc=FDateTime::UtcNow().ToIso8601();
     if(Status==EVFXReviewStatus::NotTested) for(FVFXReviewEvidence& Gate:Review->Gates) Gate.Result=EVFXGateResult::NotAssessed;
-    UpdateReviewRows();LastMessage=TEXT("Review updated. Save Reviews to persist.");OnChanged.Broadcast();return true;
+    UpdateReviewRows();LastMessage=TEXT("评审已更新，请点击“保存验收”写入文件。");OnChanged.Broadcast();return true;
 }
 bool AVFXShowcaseController::SetReviewNotes(const FString& Notes,const FString& FailReason)
 {
@@ -489,7 +498,7 @@ bool AVFXShowcaseController::SetReviewNotes(const FString& Notes,const FString& 
     }
     // Editing prose never grants, clears or refreshes the version of gate evidence.
     Review->Notes=Notes;Review->FailReason=FailReason;Review->TimestampUtc=FDateTime::UtcNow().ToIso8601();
-    UpdateReviewRows();LastMessage=TEXT("Notes updated; review status and evidence retained. Save Reviews to persist.");
+    UpdateReviewRows();LastMessage=TEXT("备注已更新，评审状态与证据已保留；请点击“保存验收”写入文件。");
     OnChanged.Broadcast();return true;
 }
 
@@ -515,6 +524,51 @@ void AVFXShowcaseController::CaptureSmokeStage(const FString& Stage,bool bScreen
     Root->SetBoolField(TEXT("screenshotRequested"),bScreenshot);
     Root->SetBoolField(TEXT("widgetPresent"),IsValid(LiveWidget));
     Root->SetBoolField(TEXT("entryDispatchedThroughWidget"),bSmokeImpactSelected);
+    if(LiveWidget&&LiveWidget->WidgetTree)
+    {
+        int32 TextControls=0;TArray<TSharedPtr<FJsonValue>> FontMismatches,ChoiceCaptions;
+        TArray<UUserWidget*> Pending={LiveWidget};TSet<UUserWidget*> Visited;
+        auto AuditFont=[&](UWidget* Control,int32 Size)
+        {
+            ++TextControls;
+            if(Size!=VFXShowcaseUI::FontSize)
+                FontMismatches.Add(MakeShared<FJsonValueString>(Control->GetName()+FString::Printf(TEXT(": %d"),Size)));
+        };
+        while(!Pending.IsEmpty())
+        {
+            UUserWidget* Container=Pending.Pop();
+            if(!Container||!Container->WidgetTree||Visited.Contains(Container))continue;
+            Visited.Add(Container);TArray<UWidget*> Widgets;Container->WidgetTree->GetAllWidgets(Widgets);
+            for(UWidget* Control:Widgets)
+            {
+                if(UUserWidget* Nested=Cast<UUserWidget>(Control))Pending.Add(Nested);
+                if(UTextBlock* Text=Cast<UTextBlock>(Control))AuditFont(Control,Text->GetFont().Size);
+                else if(UEditableTextBox* Edit=Cast<UEditableTextBox>(Control))AuditFont(Control,Edit->GetWidgetStyle().TextStyle.Font.Size);
+                else if(UMultiLineEditableTextBox* MultiEdit=Cast<UMultiLineEditableTextBox>(Control))AuditFont(Control,MultiEdit->WidgetStyle.TextStyle.Font.Size);
+                else if(USpinBox* Spin=Cast<USpinBox>(Control))AuditFont(Control,Spin->GetFont().Size);
+                else if(UComboBoxString* Combo=Cast<UComboBoxString>(Control))
+                {
+                    AuditFont(Control,Combo->GetFont().Size);
+                    if(Combo->OnGenerateWidgetEvent.IsBound())
+                        for(int32 I=0;I<Combo->GetOptionCount();++I)
+                        {
+                            const FString Key=Combo->GetOptionAtIndex(I);
+                            if(UTextBlock* Caption=Cast<UTextBlock>(Combo->OnGenerateWidgetEvent.Execute(Key)))
+                            {
+                                AuditFont(Caption,Caption->GetFont().Size);
+                                TSharedRef<FJsonObject> Option=MakeShared<FJsonObject>();
+                                Option->SetStringField(TEXT("key"),Key);Option->SetStringField(TEXT("caption"),Caption->GetText().ToString());
+                                ChoiceCaptions.Add(MakeShared<FJsonValueObject>(Option));
+                            }
+                        }
+                }
+            }
+        }
+        TSharedRef<FJsonObject> Audit=MakeShared<FJsonObject>();
+        Audit->SetNumberField(TEXT("expectedFontSize"),VFXShowcaseUI::FontSize);Audit->SetNumberField(TEXT("textControlsChecked"),TextControls);
+        Audit->SetArrayField(TEXT("fontMismatches"),FontMismatches);Audit->SetArrayField(TEXT("choiceCaptions"),ChoiceCaptions);
+        Root->SetObjectField(TEXT("uiAudit"),Audit);
+    }
     Root->SetStringField(TEXT("screenshotPath"),bScreenshot?Screenshot:TEXT(""));
     Root->SetStringField(TEXT("visualReview"),TEXT("NotTested"));Root->SetStringField(TEXT("gpuProfile"),TEXT("NotRun"));
     TSharedRef<FJsonObject> Telemetry=MakeShared<FJsonObject>();
@@ -540,9 +594,9 @@ void AVFXShowcaseController::StartSmokeTest()
     {
         const FVFXShowcaseEntry* Impact=AllEntries.FindByPredicate([](const FVFXShowcaseEntry& Row)
             {return Row.Category==EVFXCategory::Impact&&Row.VFXTag.IsValid()&&Row.ValidationIssues.IsEmpty();});
-        if(!Impact){LastMessage=TEXT("Smoke test failed: no valid Impact catalog entry.");CaptureSmokeStage(TEXT("MissingImpact"),false);return;}
+        if(!Impact){LastMessage=TEXT("运行检查失败：目录中没有有效的命中特效。");CaptureSmokeStage(TEXT("MissingImpact"),false);return;}
         UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget);
-        if(!Widget){LastMessage=TEXT("Smoke test failed: Showcase UI is missing.");CaptureSmokeStage(TEXT("MissingWidget"),false);return;}
+        if(!Widget){LastMessage=TEXT("运行检查失败：展示界面未创建。");CaptureSmokeStage(TEXT("MissingWidget"),false);return;}
         const FGameplayTag ImpactTag=Impact->VFXTag;
         Widget->ExecuteAction(TEXT("Category:Impact"));
         Widget->ExecuteAction(TEXT("Entry:")+ImpactTag.ToString());
@@ -563,6 +617,15 @@ void AVFXShowcaseController::StartSmokeTest()
         ScheduleSmokeAction(.15f,[this](){CaptureSmokeStage(TEXT("Stress10"),true);});
     });
     ScheduleSmokeAction(20.f,[this](){if(UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget))Widget->ExecuteAction(TEXT("Stop Immediate"));else Stop(true);CaptureSmokeStage(TEXT("Stopped"),false);});
+    ScheduleSmokeAction(18.f,[this]()
+    {
+        if(!LiveWidget||!LiveWidget->WidgetTree)return;
+        TArray<UWidget*> Widgets;LiveWidget->WidgetTree->GetAllWidgets(Widgets);
+        UScrollBox* Details=nullptr;
+        for(UWidget* Widget:Widgets)if(UScrollBox* Scroll=Cast<UScrollBox>(Widget))Details=Scroll;
+        if(Details)Details->ScrollToEnd();
+        ScheduleSmokeAction(.3f,[this](){CaptureSmokeStage(TEXT("Review"),true);});
+    });
     ScheduleSmokeAction(22.f,[this](){CaptureSmokeStage(TEXT("Exit"),false);FPlatformMisc::RequestExit(false);});
 }
 void AVFXShowcaseController::ToggleFavorite()
@@ -586,15 +649,15 @@ bool AVFXShowcaseController::SaveReviews()
     const FString Path=GetReviewFilePath();IFileManager::Get().MakeDirectory(*FPaths::GetPath(Path),true);
     const FString TempPath=Path+TEXT(".tmp");
     if(!FFileHelper::SaveStringToFile(Output,*TempPath,FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM)||!IFileManager::Get().Move(*Path,*TempPath,true,true))
-    {LastMessage=TEXT("Could not persist Reviews.json; existing file retained where possible.");return false;}
-    UpdateReviewRows();LastMessage=TEXT("Reviews saved: ")+Path;OnChanged.Broadcast();return true;
+    {LastMessage=TEXT("评审文件保存失败，已尽可能保留原有文件。");return false;}
+    UpdateReviewRows();LastMessage=TEXT("评审已保存：")+Path;OnChanged.Broadcast();return true;
 }
 bool AVFXShowcaseController::LoadReviews()
 {
     const FString Path=GetReviewFilePath();if(!IFileManager::Get().FileExists(*Path))return true;
     FString Input;TSharedPtr<FJsonObject> Root;
     if(!FFileHelper::LoadFileToString(Input,*Path)||!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Input),Root)||!Root.IsValid())
-    {LastMessage=TEXT("Review JSON is invalid; in-memory records retained.");return false;}
+    {LastMessage=TEXT("评审文件格式无效，已保留内存中的记录。");return false;}
     const TArray<TSharedPtr<FJsonValue>>* Values=nullptr;
     if(!Root->TryGetArrayField(TEXT("reviews"),Values))return false;
     TArray<FVFXShowcaseReview> Loaded;
@@ -602,7 +665,7 @@ bool AVFXShowcaseController::LoadReviews()
     {
         FVFXShowcaseReview Item;
         if(!Value.IsValid()||Value->Type!=EJson::Object||!FJsonObjectConverter::JsonObjectToUStruct(Value->AsObject().ToSharedRef(),FVFXShowcaseReview::StaticStruct(),&Item,0,0))
-        {LastMessage=TEXT("Invalid review record; in-memory records retained.");return false;}
+        {LastMessage=TEXT("评审记录无效，已保留内存中的记录。");return false;}
         if(Item.Status==EVFXReviewStatus::ProductionReady&&!Item.IsProductionReady())Item.Status=EVFXReviewStatus::NotTested;
         if(Loaded.ContainsByPredicate([&Item](const FVFXShowcaseReview& R){return R.VFXTag==Item.VFXTag;}))return false;
         Loaded.Add(MoveTemp(Item));

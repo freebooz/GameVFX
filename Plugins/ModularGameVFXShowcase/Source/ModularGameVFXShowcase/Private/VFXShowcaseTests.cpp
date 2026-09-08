@@ -20,6 +20,10 @@ bool FVFXShowcaseFilterTest::RunTest(const FString&)
     TestTrue(TEXT("Category + element + case-insensitive name + status compose"),Row.Matches(Filter,{}));
     Filter.Element=EVFXElement::Ice;TestFalse(TEXT("Mismatched element excluded"),Row.Matches(Filter,{}));
     Filter.Element=EVFXElement::None;Filter.Search=TEXT("Burst");TestTrue(TEXT("Search includes Form metadata"),Row.Matches(Filter,{}));
+    Filter.Search=TEXT("雷电");TestTrue(TEXT("Chinese element search resolves stable metadata"),Row.Matches(Filter,{}));
+    Filter.Search=TEXT("爆发");TestTrue(TEXT("Chinese burst synonym search works"),Row.Matches(Filter,{}));
+    Filter.Search=TEXT("冰霜");TestFalse(TEXT("Unrelated Chinese element search excluded"),Row.Matches(Filter,{}));
+    Filter.Search=TEXT("Burst");
     Filter.bFavoritesOnly=true;TestFalse(TEXT("Favorite filter is independent"),Row.Matches(Filter,{}));Row.Review.bFavorite=true;TestTrue(TEXT("Favorite included"),Row.Matches(Filter,{}));
     Filter.bRecentOnly=true;TestFalse(TEXT("Never selected item excluded by Recent"),Row.Matches(Filter,{}));
     return true;

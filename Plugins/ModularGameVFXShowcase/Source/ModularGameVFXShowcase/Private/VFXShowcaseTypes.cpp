@@ -1,5 +1,6 @@
 #include "VFXShowcaseTypes.h"
 #include "VFXShowcaseProfile.h"
+#include "VFXShowcaseLocalization.h"
 bool FVFXReviewEvidence::HasApproval(const FString& Version) const
 {
     return Result == EVFXGateResult::Approved && !Evidence.TrimStartAndEnd().IsEmpty() && !Reviewer.TrimStartAndEnd().IsEmpty()
@@ -24,7 +25,10 @@ bool FVFXShowcaseEntry::Matches(const FVFXShowcaseFilter& Filter, const TArray<F
     const FString Search = Filter.Search.TrimStartAndEnd();
     return Search.IsEmpty() || DisplayName.ToString().Contains(Search) || VFXTag.ToString().Contains(Search)
         || StaticEnum<EVFXElement>()->GetNameStringByValue(int64(Element)).Contains(Search)
-        || StaticEnum<EVFXForm>()->GetNameStringByValue(int64(Form)).Contains(Search);
+        || StaticEnum<EVFXForm>()->GetNameStringByValue(int64(Form)).Contains(Search)
+        || VFXShowcaseUI::Chinese(StaticEnum<EVFXElement>()->GetNameStringByValue(int64(Element))).Contains(Search)
+        || VFXShowcaseUI::Chinese(StaticEnum<EVFXForm>()->GetNameStringByValue(int64(Form))).Contains(Search)
+        || (Form == EVFXForm::Burst && FString(TEXT("爆发")).Contains(Search));
 }
 const FVFXShowcaseProfileEntry* UVFXShowcaseProfile::Find(FGameplayTag Tag) const
 {

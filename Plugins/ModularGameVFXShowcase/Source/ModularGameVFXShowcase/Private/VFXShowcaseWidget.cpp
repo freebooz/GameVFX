@@ -1,5 +1,7 @@
 #include "VFXShowcaseWidget.h"
 #include "VFXShowcaseController.h"
+#include "VFXShowcaseLocalization.h"
+#include "Brushes/SlateRoundedBoxBrush.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/ButtonSlot.h"
@@ -21,10 +23,51 @@
 
 namespace
 {
-    const FLinearColor PanelColor(0.018f, 0.025f, 0.040f, 0.95f);
+    const FLinearColor PanelColor(0.008f, 0.016f, 0.028f, 0.08f);
     const FLinearColor Accent(0.32f, 0.78f, 0.94f, 1.f);
+    const FLinearColor TextColor(0.88f, 0.95f, 1.f, 1.f);
+    using VFXShowcaseUI::Chinese;
     template<typename T> FString EnumName(T Value) { return StaticEnum<T>()->GetNameStringByValue(static_cast<int64>(Value)); }
+    template<typename T> FString EnumLabel(T Value) { return Chinese(EnumName(Value)); }
     template<typename T> T EnumValue(const FString& Value) { return static_cast<T>(StaticEnum<T>()->GetValueByNameString(Value)); }
+    FSlateFontInfo HudFont(FSlateFontInfo Font)
+    {
+        Font.Size = VFXShowcaseUI::FontSize;
+        Font.OutlineSettings.OutlineSize = 1;
+        Font.OutlineSettings.OutlineColor = FLinearColor(0, 0, 0, .8f);
+        return Font;
+    }
+    FSlateBrush HudBrush(float Opacity = .24f, float OutlineOpacity = .45f)
+    {
+        return FSlateRoundedBoxBrush(FLinearColor(.008f, .025f, .044f, Opacity), 3.f,
+            FLinearColor(.25f, .68f, .82f, OutlineOpacity), .7f);
+    }
+    FButtonStyle HudButtonStyle(FButtonStyle Style)
+    {
+        Style.Normal = HudBrush(); Style.Hovered = HudBrush(.42f, .85f);
+        Style.Pressed = HudBrush(.56f, 1.f); Style.Disabled = HudBrush(.12f, .2f);
+        Style.NormalForeground = TextColor; Style.HoveredForeground = TextColor;
+        Style.PressedForeground = Accent; Style.DisabledForeground = FLinearColor(.55f, .65f, .7f);
+        return Style;
+    }
+    FEditableTextBoxStyle HudInputStyle(FEditableTextBoxStyle Style)
+    {
+        Style.TextStyle.Font = HudFont(Style.TextStyle.Font);
+        // Slate dims the hint fill independently of its font outline. An opaque dark outline
+        // overwhelms that dimmed fill, so editable text uses clean, explicit pale lettering.
+        Style.TextStyle.Font.OutlineSettings.OutlineSize = 0;
+        Style.TextStyle.Font.OutlineSettings.OutlineColor = FLinearColor::Transparent;
+        Style.TextStyle.ColorAndOpacity = FLinearColor(.9f, .94f, .98f, 1.f);
+        Style.ForegroundColor = TextColor; Style.FocusedForegroundColor = TextColor;
+        Style.ReadOnlyForegroundColor = TextColor;
+        Style.BackgroundImageNormal = HudBrush(.3f);
+        Style.BackgroundImageHovered = HudBrush(.42f, .8f);
+        Style.BackgroundImageFocused = HudBrush(.45f, 1.f);
+        Style.BackgroundImageReadOnly = HudBrush(.16f, .2f);
+        Style.BackgroundColor = FLinearColor::White;
+        Style.Padding = FMargin(7.f, 5.f);
+        return Style;
+    }
     UBorder* Frame(UWidgetTree* Tree, UWidget* Child)
     {
         UBorder* Border = Tree->ConstructWidget<UBorder>();
@@ -73,14 +116,12 @@ TSharedRef<SWidget> UVFXShowcaseWidget::RebuildWidget()
     return Super::RebuildWidget();
 }
 
-UTextBlock* UVFXShowcaseWidget::Label(UVerticalBox* Box, const FString& Text, int32 Size)
+UTextBlock* UVFXShowcaseWidget::Label(UVerticalBox* Box, const FString& Text)
 {
     UTextBlock* Result = WidgetTree->ConstructWidget<UTextBlock>();
-    Result->SetText(FText::FromString(Text));
-    FSlateFontInfo Font = Result->GetFont();
-    Font.Size = Size;
-    Result->SetFont(Font);
-    Result->SetColorAndOpacity(FSlateColor(FLinearColor(0.88f, 0.92f, 0.98f)));
+    Result->SetText(FText::FromString(Chinese(Text)));
+    Result->SetFont(HudFont(Result->GetFont()));
+    Result->SetColorAndOpacity(TextColor);
     Result->SetAutoWrapText(true);
     Result->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
     if (Inspector && Box == Inspector->GetContentBox())
@@ -97,16 +138,18 @@ UButton* UVFXShowcaseWidget::ActionButton(UPanelWidget* Parent, const FString& T
 {
     UVFXShowcaseActionButton* Button = WidgetTree->ConstructWidget<UVFXShowcaseActionButton>();
     Button->Configure(this, Action);
-    Button->SetBackgroundColor(FLinearColor(0.11f, 0.20f, 0.29f));
+    Button->SetStyle(HudButtonStyle(Button->GetStyle()));
+    Button->SetBackgroundColor(FLinearColor::White);
     UTextBlock* Caption = WidgetTree->ConstructWidget<UTextBlock>();
-    Caption->SetText(FText::FromString(Text));
-    FSlateFontInfo Font = Caption->GetFont(); Font.Size = 11; Caption->SetFont(Font);
-    Caption->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-    Caption->SetAutoWrapText(true);
+    Caption->SetText(FText::FromString(Chinese(Text)));
+    Caption->SetFont(HudFont(Caption->GetFont()));
+    Caption->SetColorAndOpacity(TextColor);
+    // A control caption must contribute its complete horizontal width to its WrapBox.
+    // Only whole buttons wrap to the next row; Chinese captions never collapse to one glyph.
+    Caption->SetAutoWrapText(false);
+    Caption->SetMargin(FMargin(10.f, 6.f));
     if (Action.StartsWith(TEXT("Entry:")) || Action.StartsWith(TEXT("Category:")))
     {
-        Font.Size = 10;
-        Caption->SetFont(Font);
         Caption->SetAutoWrapText(false);
         Caption->SetWrapTextAt(248.f);
         Caption->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
@@ -129,20 +172,63 @@ UComboBoxString* UVFXShowcaseWidget::Choice(UVerticalBox* Box, const FString& Ti
 {
     Label(Box, Title);
     UComboBoxString* Combo = WidgetTree->ConstructWidget<UComboBoxString>();
+    // UE 5.8 exposes these as construction-only properties with getters and no runtime setters.
+PRAGMA_DISABLE_DEPRECATION_WARNINGS
+    Combo->Font = HudFont(Combo->GetFont());
+    Combo->ForegroundColor = TextColor;
+PRAGMA_ENABLE_DEPRECATION_WARNINGS
+    // UE invokes this delegate for the selected value and every popup item; stored options remain stable English keys.
+    Combo->OnGenerateWidgetEvent.BindDynamic(this, &UVFXShowcaseWidget::GenerateChoiceWidget);
+    FComboBoxStyle ComboStyle = Combo->GetWidgetStyle();
+    ComboStyle.ComboButtonStyle.ButtonStyle = HudButtonStyle(ComboStyle.ComboButtonStyle.ButtonStyle);
+    ComboStyle.ComboButtonStyle.DownArrowImage.TintColor = Accent;
+    ComboStyle.ComboButtonStyle.MenuBorderBrush = HudBrush(.78f, .65f);
+    ComboStyle.ContentPadding = FMargin(6.f, 4.f);
+    ComboStyle.MenuRowPadding = FMargin(5.f, 4.f);
+    Combo->SetWidgetStyle(ComboStyle);
+    FTableRowStyle Rows = Combo->GetItemStyle();
+    Rows.EvenRowBackgroundBrush = HudBrush(0.f, 0.f);
+    Rows.OddRowBackgroundBrush = Rows.EvenRowBackgroundBrush;
+    Rows.EvenRowBackgroundHoveredBrush = HudBrush(.38f, .7f);
+    Rows.OddRowBackgroundHoveredBrush = Rows.EvenRowBackgroundHoveredBrush;
+    Rows.ActiveBrush = HudBrush(.46f, .85f); Rows.ActiveHoveredBrush = HudBrush(.55f, 1.f);
+    Rows.InactiveBrush = HudBrush(.24f, .5f); Rows.InactiveHoveredBrush = Rows.ActiveBrush;
+    Rows.TextColor = TextColor; Rows.SelectedTextColor = TextColor;
+    Combo->SetItemStyle(Rows);
     for (const FString& Option : Options) Combo->AddOption(Option);
     if (Options.Num()) Combo->SetSelectedOption(Options[0]);
     Box->AddChildToVerticalBox(Combo)->SetPadding(FMargin(0, 2));
     return Combo;
 }
 
+UWidget* UVFXShowcaseWidget::GenerateChoiceWidget(FString Option)
+{
+    UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>();
+    Text->SetText(FText::FromString(Chinese(Option)));
+    Text->SetFont(HudFont(Text->GetFont()));
+    Text->SetColorAndOpacity(TextColor);
+    Text->SetWrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping);
+    Text->SetWrapTextAt(245.f);
+    return Text;
+}
+
 void UVFXShowcaseWidget::Number(UVerticalBox* Box, const FString& Name, const FString& Key, float Value, float Min, float Max)
 {
     UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>();
     UTextBlock* Caption = WidgetTree->ConstructWidget<UTextBlock>();
-    Caption->SetText(FText::FromString(Name));
-    FSlateFontInfo Font = Caption->GetFont(); Font.Size = 11; Caption->SetFont(Font);
+    Caption->SetText(FText::FromString(Chinese(Name)));
+    Caption->SetFont(HudFont(Caption->GetFont()));
+    Caption->SetColorAndOpacity(TextColor);
     Row->AddChildToHorizontalBox(Caption)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     UVFXShowcaseNumber* Spin = WidgetTree->ConstructWidget<UVFXShowcaseNumber>();
+    Spin->SetFont(HudFont(Spin->GetFont()));
+    FSpinBoxStyle SpinStyle = Spin->GetWidgetStyle();
+    SpinStyle.BackgroundBrush = HudBrush(.3f); SpinStyle.ActiveBackgroundBrush = HudBrush(.45f, 1.f);
+    SpinStyle.HoveredBackgroundBrush = HudBrush(.4f, .8f);
+    SpinStyle.InactiveFillBrush = HudBrush(.08f, 0.f); SpinStyle.ActiveFillBrush = HudBrush(.25f, 0.f);
+    SpinStyle.HoveredFillBrush = HudBrush(.16f, 0.f); SpinStyle.ArrowsImage.TintColor = Accent;
+    SpinStyle.ForegroundColor = TextColor;
+    Spin->SetWidgetStyle(SpinStyle); Spin->SetForegroundColor(TextColor);
     Spin->SetMinValue(Min); Spin->SetMaxValue(Max);
     Spin->SetMinSliderValue(Min); Spin->SetMaxSliderValue(Max);
     Spin->SetMinDesiredWidth(110.f);
@@ -168,7 +254,7 @@ void UVFXShowcaseWidget::BuildWorkbench()
     UVerticalBox* Root = WidgetTree->ConstructWidget<UVerticalBox>();
     WidgetTree->RootWidget = Root;
     UVerticalBox* Header = WidgetTree->ConstructWidget<UVerticalBox>();
-    Label(Header, TEXT("VFX SHOWCASE  /  Catalog & acceptance workbench"), 19)->SetColorAndOpacity(Accent);
+    Label(Header, TEXT("VFX SHOWCASE  /  Catalog & acceptance workbench"))->SetColorAndOpacity(Accent);
     StatusText = Label(Header, TEXT("Choose a catalog entry to play through VFX Manager."));
     Root->AddChildToVerticalBox(Frame(WidgetTree, Header));
 
@@ -179,14 +265,9 @@ void UVFXShowcaseWidget::BuildWorkbench()
     BrowserSize->SetWidthOverride(310); BrowserSize->SetContent(Frame(WidgetTree, Browser));
     Body->AddChildToHorizontalBox(BrowserSize);
     Search = WidgetTree->ConstructWidget<UEditableTextBox>();
-    Search->SetHintText(FText::FromString(TEXT("Search name / tag")));
-    FEditableTextBoxStyle SearchStyle = Search->GetWidgetStyle();
-    SearchStyle.TextStyle.Font.Size = 12;
-    SearchStyle.ForegroundColor = FSlateColor(FLinearColor(.04f, .06f, .09f));
-    SearchStyle.TextStyle.ColorAndOpacity = SearchStyle.ForegroundColor;
-    SearchStyle.Padding = FMargin(7.f, 5.f);
-    Search->SetWidgetStyle(SearchStyle);
-    Search->SetForegroundColor(FLinearColor(.04f, .06f, .09f));
+    Search->SetHintText(FText::FromString(TEXT("搜索名称／标签")));
+    Search->SetWidgetStyle(HudInputStyle(Search->GetWidgetStyle()));
+    Search->SetForegroundColor(TextColor);
     Search->OnTextChanged.AddDynamic(this, &UVFXShowcaseWidget::SearchChanged);
     Browser->AddChildToVerticalBox(Search);
 
@@ -211,16 +292,16 @@ void UVFXShowcaseWidget::BuildWorkbench()
     UVerticalBox* Stage = WidgetTree->ConstructWidget<UVerticalBox>();
     Body->AddChildToHorizontalBox(Stage)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     Performance = CreateWidget<UVFXShowcasePerformancePanel>(this);
-    Label(Performance->GetContentBox(), TEXT("LIVE PERFORMANCE"), 13)->SetColorAndOpacity(Accent);
+    Label(Performance->GetContentBox(), TEXT("LIVE PERFORMANCE"))->SetColorAndOpacity(Accent);
     TelemetryText = Label(Performance->GetContentBox(), TEXT("Waiting for controller"));
     Stage->AddChildToVerticalBox(Frame(WidgetTree, Performance));
     USpacer* Space = WidgetTree->ConstructWidget<USpacer>();
     Space->SetVisibility(ESlateVisibility::HitTestInvisible);
     Stage->AddChildToVerticalBox(Space)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     UVerticalBox* StageFooter = WidgetTree->ConstructWidget<UVerticalBox>();
-    SelectionText = Label(StageFooter, TEXT("No VFX selected"), 15);
+    SelectionText = Label(StageFooter, TEXT("No VFX selected"));
     CompareText = Label(StageFooter, TEXT("Compare A: —  |  B: —"));
-    Label(StageFooter, TEXT("Select an entry for Single mode. Stress uses its own test zone.\nUse the Camera distance controls to inspect near and far readability."), 10);
+    Label(StageFooter, TEXT("Select an entry for Single mode. Stress uses its own test zone.\nUse the Camera distance controls to inspect near and far readability."));
     Stage->AddChildToVerticalBox(Frame(WidgetTree, StageFooter));
 
     UVerticalBox* Details = WidgetTree->ConstructWidget<UVerticalBox>();
@@ -231,7 +312,7 @@ void UVFXShowcaseWidget::BuildWorkbench()
     Body->AddChildToHorizontalBox(DetailSize);
     Inspector = CreateWidget<UVFXShowcaseInspector>(this); Details->AddChildToVerticalBox(Inspector);
     Parameters = CreateWidget<UVFXShowcaseParameterPanel>(this); Details->AddChildToVerticalBox(Parameters);
-    Label(Details, TEXT("ENVIRONMENT"), 15)->SetColorAndOpacity(Accent);
+    Label(Details, TEXT("ENVIRONMENT"))->SetColorAndOpacity(Accent);
     BackgroundChoice = Choice(Details, TEXT("Background"), {TEXT("Neutral"), TEXT("Bright"), TEXT("Dark"), TEXT("Complex")});
     QualityChoice = Choice(Details, TEXT("Quality"), {TEXT("Cinematic"), TEXT("High"), TEXT("Medium"), TEXT("Low"), TEXT("VRMobile")});
     QualityChoice->SetSelectedOption(TEXT("High"));
@@ -240,7 +321,7 @@ void UVFXShowcaseWidget::BuildWorkbench()
         Combo->OnSelectionChanged.AddDynamic(this, &UVFXShowcaseWidget::EnvironmentChanged);
     Label(Details, TEXT("Preview / beam distance"));
     UWrapBox* Distances = WidgetTree->ConstructWidget<UWrapBox>(); Details->AddChildToVerticalBox(Distances);
-    for (int32 Distance : {3, 5, 10, 20, 30, 50}) ActionButton(Distances, FString::Printf(TEXT("%dm"), Distance), FString::Printf(TEXT("Distance:%d"), Distance));
+    for (int32 Distance : {3, 5, 10, 20, 30, 50}) ActionButton(Distances, FString::Printf(TEXT("%d米"), Distance), FString::Printf(TEXT("Distance:%d"), Distance));
     Label(Details, TEXT("Camera distance"));
     UWrapBox* Cameras = WidgetTree->ConstructWidget<UWrapBox>(); Details->AddChildToVerticalBox(Cameras);
     ActionButton(Cameras, TEXT("Near 3m"), TEXT("Camera:3"));
@@ -254,9 +335,9 @@ void UVFXShowcaseWidget::BuildWorkbench()
 
     Review = CreateWidget<UVFXShowcaseReviewPanel>(this); Details->AddChildToVerticalBox(Review);
     UVerticalBox* ReviewBox = Review->GetContentBox();
-    Label(ReviewBox, TEXT("MANUAL REVIEW"), 15)->SetColorAndOpacity(Accent);
+    Label(ReviewBox, TEXT("MANUAL REVIEW"))->SetColorAndOpacity(Accent);
     ReviewState = Label(ReviewBox, TEXT("No review selected"));
-    Label(ReviewBox, TEXT("Check: focus, impact, force, speed, depth, color, silhouette, timing, readability, end feedback and performance."), 10);
+    Label(ReviewBox, TEXT("Check: focus, impact, force, speed, depth, color, silhouette, timing, readability, end feedback and performance."));
     const TArray<FString> Verdicts = {TEXT("NotTested"), TEXT("Pass"), TEXT("Fail")};
     VisualChoice = Choice(ReviewBox, TEXT("Visual"), Verdicts);
     GameplayChoice = Choice(ReviewBox, TEXT("Gameplay"), Verdicts);
@@ -270,9 +351,13 @@ void UVFXShowcaseWidget::BuildWorkbench()
     ReasonChoice = Choice(ReviewBox, TEXT("Failure reason"), {TEXT("None"), TEXT("WeakVisual"), TEXT("WeakImpact"), TEXT("PoorLayering"), TEXT("ColorIssue"), TEXT("ExcessiveBloom"), TEXT("Occlusion"), TEXT("LifetimeIssue"), TEXT("Overdraw"), TEXT("TooManyParticles"), TEXT("HighCost"), TEXT("VRIssue"), TEXT("WrongCategory"), TEXT("CatalogIssue"), TEXT("Other")});
     Notes = WidgetTree->ConstructWidget<UMultiLineEditableTextBox>();
     Reviewer = WidgetTree->ConstructWidget<UEditableTextBox>();
-    Reviewer->SetHintText(FText::FromString(TEXT("Reviewer name (required for gate evidence)")));
+    Reviewer->SetWidgetStyle(HudInputStyle(Reviewer->GetWidgetStyle()));
+    Reviewer->SetForegroundColor(TextColor);
+    Reviewer->SetHintText(FText::FromString(TEXT("评审人姓名（验收证据必填）")));
     ReviewBox->AddChildToVerticalBox(Reviewer);
-    Notes->SetHintText(FText::FromString(TEXT("Evidence / observations for the chosen gate verdicts")));
+    Notes->WidgetStyle = HudInputStyle(Notes->WidgetStyle);
+    Notes->SetForegroundColor(TextColor);
+    Notes->SetHintText(FText::FromString(TEXT("填写本次验收项的证据与观察记录")));
     USizeBox* NoteSize = WidgetTree->ConstructWidget<USizeBox>(); NoteSize->SetHeightOverride(100); NoteSize->SetContent(Notes);
     ReviewBox->AddChildToVerticalBox(NoteSize);
     UWrapBox* ReviewButtons = WidgetTree->ConstructWidget<UWrapBox>(); ReviewBox->AddChildToVerticalBox(ReviewButtons);
@@ -281,7 +366,7 @@ void UVFXShowcaseWidget::BuildWorkbench()
     ActionButton(ReviewButtons, TEXT("Final PASS"), TEXT("FinalPass"));
     ActionButton(ReviewButtons, TEXT("FAIL"), TEXT("FinalFail"));
     ActionButton(ReviewButtons, TEXT("Toggle Favorite"), TEXT("Favorite"));
-    Label(ReviewBox, TEXT("Production Ready requires all six gates approved with reviewer + evidence for this asset version. Saves review data only."), 10);
+    Label(ReviewBox, TEXT("Production Ready requires all six gates approved with reviewer + evidence for this asset version. Saves review data only."));
 
     UVerticalBox* Controls = WidgetTree->ConstructWidget<UVerticalBox>();
     UWrapBox* Playback = WidgetTree->ConstructWidget<UWrapBox>(); Controls->AddChildToVerticalBox(Playback);
@@ -293,7 +378,7 @@ void UVFXShowcaseWidget::BuildWorkbench()
     ActionButton(Playback, TEXT("Combat simulation"), TEXT("Combat"));
     ActionButton(Playback, TEXT("Refresh / Validate"), TEXT("Refresh"));
     UWrapBox* Stress = WidgetTree->ConstructWidget<UWrapBox>(); Controls->AddChildToVerticalBox(Stress);
-    for (int32 Count : {1, 5, 10, 20, 50, 100}) ActionButton(Stress, FString::Printf(TEXT("Stress %d"), Count), FString::Printf(TEXT("Stress:%d"), Count));
+    for (int32 Count : {1, 5, 10, 20, 50, 100}) ActionButton(Stress, FString::Printf(TEXT("压力测试：%d个"), Count), FString::Printf(TEXT("Stress:%d"), Count));
     Root->AddChildToVerticalBox(Frame(WidgetTree, Controls));
     bUpdating = false;
 }
@@ -303,7 +388,7 @@ void UVFXShowcaseWidget::RefreshCatalog()
     if (!Categories) return;
     if (!IsValid(Controller))
     {
-        StatusText->SetText(FText::FromString(TEXT("No Showcase Controller in this world. Place BP_VFX_ShowcaseController in the level.")));
+        StatusText->SetText(FText::FromString(TEXT("当前关卡没有测试控制器，请放置 BP_VFX_ShowcaseController。")));
         return;
     }
     Controller->RefreshCatalog();
@@ -323,8 +408,8 @@ void UVFXShowcaseWidget::RebuildCategories()
     {
         // The controller's Unspecified row is the aggregate, not a second category.
         const FString Name = Progress.Category == EVFXCategory::Unspecified ? TEXT("All") : EnumName(Progress.Category);
-        const FString State = Progress.Failed > 0 ? TEXT("Failed") : (Progress.Total > 0 && Progress.Ready == Progress.Total ? TEXT("Ready") : TEXT("Needs review"));
-        UButton* Button = ActionButton(Box, FString::Printf(TEXT("%s · %d entries\n%d / %d reviewed · %s"), *Name, Progress.Total, Progress.Reviewed, Progress.Total, *State), TEXT("Category:") + Name);
+        const FString State = Progress.Failed > 0 ? TEXT("存在未通过项") : (Progress.Total > 0 && Progress.Ready == Progress.Total ? TEXT("可用于生产") : TEXT("待验收"));
+        UButton* Button = ActionButton(Box, FString::Printf(TEXT("%s · %d项\n已验收%d／%d · %s"), *Chinese(Name), Progress.Total, Progress.Reviewed, Progress.Total, *State), TEXT("Category:") + Name);
         if (SelectedCategory == Name) Button->SetBackgroundColor(Accent);
     }
     for (const FString& Name : {TEXT("Favorites"), TEXT("Recent"), TEXT("Failed"), TEXT("Unreviewed")})
@@ -344,13 +429,13 @@ void UVFXShowcaseWidget::RebuildEntries()
         UVFXShowcaseEntryItem* Item = CreateWidget<UVFXShowcaseEntryItem>(this);
         const FString Caption = FString::Printf(TEXT("%s%s\n%s\n%s / %s  |  %s  |  %s"),
             Entry.Review.bFavorite ? TEXT("★ ") : TEXT(""), *Entry.DisplayName.ToString(), *Entry.VFXTag.ToString(),
-            *EnumName(Entry.Element), *EnumName(Entry.Form), *EnumName(Entry.Priority), *EnumName(Entry.Review.Status));
+            *EnumLabel(Entry.Element), *EnumLabel(Entry.Form), *EnumLabel(Entry.Priority), *EnumLabel(Entry.Review.Status));
         UButton* Button = ActionButton(Item->GetContentBox(), Caption, TEXT("Entry:") + Entry.VFXTag.ToString());
         if (Entry.VFXTag == Controller->SelectedTag) Button->SetBackgroundColor(FLinearColor(.12f, .43f, .57f));
         Box->AddChildToVerticalBox(Item)->SetPadding(FMargin(0, 2));
     }
-    EntryCount->SetText(FText::FromString(FString::Printf(TEXT("%d entries · %s"), VisibleTags.Num(), *SelectedCategory)));
-    if (VisibleTags.IsEmpty()) Label(Box, TEXT("No matching entries. Clear filters or register a valid Catalog entry."));
+    EntryCount->SetText(FText::FromString(FString::Printf(TEXT("共%d项特效 · %s"), VisibleTags.Num(), *Chinese(SelectedCategory))));
+    if (VisibleTags.IsEmpty()) Label(Box, TEXT("没有匹配的特效，请清除筛选条件或登记有效的目录条目。"));
 }
 
 void UVFXShowcaseWidget::FilterChanged(FString Selection, ESelectInfo::Type Type)
@@ -384,7 +469,7 @@ void UVFXShowcaseWidget::RefreshSelection()
     if (!Controller) return;
     CachedTag = Controller->SelectedTag;
     UVerticalBox* Box = Inspector->GetContentBox(); Box->ClearChildren();
-    Label(Box, TEXT("INSPECTOR"), 15)->SetColorAndOpacity(Accent);
+    Label(Box, TEXT("INSPECTOR"))->SetColorAndOpacity(Accent);
     FVFXShowcaseEntry Entry;
     const bool bSelected = Controller->GetSelectedEntry(Entry);
     DisplayedAssetVersion = bSelected ? Entry.AssetVersion : FString();
@@ -395,18 +480,18 @@ void UVFXShowcaseWidget::RefreshSelection()
         return;
     }
     SelectionText->SetText(FText::FromString(Entry.DisplayName.ToString() + TEXT("\n") + Entry.VFXTag.ToString()));
-    Label(Box, Entry.DisplayName.ToString(), 14);
-    Label(Box, Entry.VFXTag.ToString(), 10);
-    Label(Box, FString::Printf(TEXT("Category: %s\nElement: %s   Form: %s\nContext: %s   Lifecycle: %s\nPriority: %s   Pooling: %s\nSpawn: %s   Preview: %s\nReview: %s"),
-        *EnumName(Entry.Category), *EnumName(Entry.Element), *EnumName(Entry.Form), *EnumName(Entry.Context), *EnumName(Entry.Lifecycle), *EnumName(Entry.Priority),
-        *Entry.Pooling, *EnumName(Entry.SpawnMode), *EnumName(Entry.PreviewMode), *EnumName(Entry.Review.Status)));
-    Label(Box, FString::Printf(TEXT("System path: %s\nEffect Type: %s\nEmitters: %d\nSimulation: %s\nFixed Bounds: %s"), *Entry.AssetPath, *Entry.EffectType, Entry.EmitterCount, *Entry.SimulationTarget, *Entry.FixedBounds), 10);
-    for (const FString& Issue : Entry.ValidationIssues) Label(Box, TEXT("Validation: ") + Issue, 10)->SetColorAndOpacity(FLinearColor(1.f, .55f, .25f));
+    Label(Box, Entry.DisplayName.ToString());
+    Label(Box, Entry.VFXTag.ToString());
+    Label(Box, FString::Printf(TEXT("分类：%s\n元素：%s　形态：%s\n场景：%s　生命周期：%s\n优先级：%s　对象池：%s\n生成方式：%s　预览方式：%s\n验收状态：%s"),
+        *EnumLabel(Entry.Category), *EnumLabel(Entry.Element), *EnumLabel(Entry.Form), *EnumLabel(Entry.Context), *EnumLabel(Entry.Lifecycle), *EnumLabel(Entry.Priority),
+        *Chinese(Entry.Pooling), *EnumLabel(Entry.SpawnMode), *EnumLabel(Entry.PreviewMode), *EnumLabel(Entry.Review.Status)));
+    Label(Box, FString::Printf(TEXT("系统资源路径：%s\n效果类型：%s\n发射器数量：%d\n模拟目标：%s\n固定边界：%s"), *Entry.AssetPath, *Chinese(Entry.EffectType), Entry.EmitterCount, *Chinese(Entry.SimulationTarget), *Entry.FixedBounds));
+    for (const FString& Issue : Entry.ValidationIssues) Label(Box, TEXT("校验：") + Issue)->SetColorAndOpacity(FLinearColor(1.f, .55f, .25f));
     BuildParameters();
     const FVFXShowcaseReview Record = Controller->GetReview(CachedTag);
     for (const FVFXReviewEvidence& Gate : Record.Gates)
         if (Gate.Result != EVFXGateResult::NotAssessed)
-            Label(Box, FString::Printf(TEXT("%s: %s%s\nVersion: %s\nReviewer: %s · %s\nEvidence: %s"), *EnumName(Gate.Gate), *EnumName(Gate.Result), Gate.AssetVersion == Entry.AssetVersion ? TEXT("") : TEXT(" [HISTORICAL / expired — read only]"), *Gate.AssetVersion, *Gate.Reviewer, *Gate.TimestampUtc, *Gate.Evidence), 10);
+            Label(Box, FString::Printf(TEXT("%s：%s%s\n资源版本：%s\n评审人：%s · %s\n验收证据：%s"), *EnumLabel(Gate.Gate), *EnumLabel(Gate.Result), Gate.AssetVersion == Entry.AssetVersion ? TEXT("") : TEXT("〔历史版本，已过期，只读〕"), *Gate.AssetVersion, *Gate.Reviewer, *Gate.TimestampUtc, *Gate.Evidence));
     bUpdating = true;
     const TArray<UComboBoxString*> Choices = {VisualChoice, GameplayChoice, PerformanceChoice, NamingChoice, CatalogChoice, DependencyChoice};
     for (int32 Index = 0; Index < Choices.Num(); ++Index)
@@ -420,7 +505,7 @@ void UVFXShowcaseWidget::RefreshSelection()
     FinalChoice->SetSelectedOption(TEXT("KeepCurrent"));
     ReasonChoice->SetSelectedOption(Record.FailReason.IsEmpty() ? TEXT("None") : Record.FailReason);
     Notes->SetText(FText::FromString(Record.Notes));
-    ReviewState->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  %s\nVersion: %s"), *EnumName(Record.Status), Record.bFavorite ? TEXT("Favorite") : TEXT("Not favorited"), *Entry.AssetVersion)));
+    ReviewState->SetText(FText::FromString(FString::Printf(TEXT("%s · %s\n资源版本：%s"), *EnumLabel(Record.Status), Record.bFavorite ? TEXT("已收藏") : TEXT("未收藏"), *Entry.AssetVersion)));
     bUpdating = false;
 }
 
@@ -443,7 +528,7 @@ void UVFXShowcaseWidget::ReviewGateChanged(FString Selection, ESelectInfo::Type 
 void UVFXShowcaseWidget::BuildParameters()
 {
     UVerticalBox* Box = Parameters->GetContentBox(); Box->ClearChildren();
-    Label(Box, TEXT("PARAMETERS"), 15)->SetColorAndOpacity(Accent);
+    Label(Box, TEXT("PARAMETERS"))->SetColorAndOpacity(Accent);
     FVFXShowcaseEntry Entry;
     if (!Controller->GetSelectedEntry(Entry)) return;
     for (const FString& Name : {TEXT("Intensity"), TEXT("Scale"), TEXT("LifetimeScale"), TEXT("Radius"), TEXT("Width"), TEXT("Length"), TEXT("Progress")})
@@ -462,7 +547,7 @@ void UVFXShowcaseWidget::BuildParameters()
         const FLinearColor* Value = Controller->Parameters.ColorParameters.Find(Key);
         const FLinearColor* Default = Entry.DefaultParameters.ColorParameters.Find(Key);
         const FLinearColor Color = Value ? *Value : Default ? *Default : FLinearColor::White;
-        Label(Box, ColorName + TEXT(" · linear RGBA"));
+        Label(Box, Chinese(ColorName) + TEXT(" · 线性颜色与透明度"));
         Number(Box, TEXT("R"), Key.ToString() + TEXT(":R"), Color.R, 0, 10);
         Number(Box, TEXT("G"), Key.ToString() + TEXT(":G"), Color.G, 0, 10);
         Number(Box, TEXT("B"), Key.ToString() + TEXT(":B"), Color.B, 0, 10);
@@ -510,7 +595,7 @@ bool UVFXShowcaseWidget::SaveReview()
     if (!Controller->GetSelectedEntry(SelectedEntry) || CachedTag != Controller->SelectedTag || DisplayedAssetVersion != SelectedEntry.AssetVersion)
     {
         RefreshSelection();
-        Controller->LastMessage = TEXT("Review form refreshed: selection or asset version changed. Reassess and explicitly select the intended gate verdicts.");
+        Controller->LastMessage = TEXT("所选特效或资源版本已变化，验收表单已刷新。请重新评估并明确选择要提交的验收结果。");
         StatusText->SetText(FText::FromString(Controller->LastMessage));
         return false;
     }
@@ -577,7 +662,7 @@ void UVFXShowcaseWidget::ExecuteAction(const FString& Action)
     else if (Action == TEXT("SetB")) CompareB = Controller->SelectedTag;
     else if (Action == TEXT("Compare"))
     {
-        if (!CompareA.IsValid() || !CompareB.IsValid()) { StatusText->SetText(FText::FromString(TEXT("Choose entries and use Set A / Set B before comparing."))); return; }
+        if (!CompareA.IsValid() || !CompareB.IsValid()) { StatusText->SetText(FText::FromString(TEXT("请先选择特效并分别设为对比甲、对比乙，再开始并排对比。"))); return; }
         Controller->SelectEntry(CompareA, false); Controller->PlayCompare(CompareB);
     }
     else if (Action == TEXT("Combat")) Controller->PlayCombatSimulation();
@@ -587,7 +672,7 @@ void UVFXShowcaseWidget::ExecuteAction(const FString& Action)
     else if (Action == TEXT("SaveNext")) { if (SaveReview()) Controller->Next(); }
     else if (Action == TEXT("FinalPass")) { FinalChoice->SetSelectedOption(TEXT("ProductionReady")); SaveReview(); }
     else if (Action == TEXT("FinalFail")) { FinalChoice->SetSelectedOption(TEXT("Fail")); SaveReview(); }
-    CompareText->SetText(FText::FromString(FString::Printf(TEXT("Compare A: %s\nCompare B: %s"), CompareA.IsValid() ? *CompareA.ToString() : TEXT("—"), CompareB.IsValid() ? *CompareB.ToString() : TEXT("—"))));
+    CompareText->SetText(FText::FromString(FString::Printf(TEXT("对比甲：%s\n对比乙：%s"), CompareA.IsValid() ? *CompareA.ToString() : TEXT("未选择"), CompareB.IsValid() ? *CompareB.ToString() : TEXT("未选择"))));
     UpdateTelemetry();
 }
 
@@ -595,11 +680,11 @@ void UVFXShowcaseWidget::UpdateTelemetry()
 {
     if (!Controller || !TelemetryText) return;
     const FVFXShowcasePerformance Data = Controller->GetPerformance();
-    TelemetryText->SetText(FText::FromString(FString::Printf(TEXT("%.1f FPS  ·  %.2f ms / frame\nActive VFX %d  ·  Managed %d  ·  Active Niagara %d\nQuality %s  ·  Test count %d\nCPU Niagara: N/A  |  GPU Niagara: N/A  |  Particles: N/A\n%s"),
-        Data.FPS, Data.FrameTimeMs, Data.ActiveVFXCount, Data.ManagedVFXCount, Data.ActiveNiagaraSystems, *EnumName(Data.Quality), Data.CurrentTestCount, *Data.ProfilingNote)));
+    TelemetryText->SetText(FText::FromString(FString::Printf(TEXT("每秒%.1f帧 · 每帧%.2f毫秒\n活动特效%d个 · 受管特效%d个 · 活动粒子系统%d个\n质量：%s · 测试实例%d个\n处理器耗时：暂无 · 图形处理器耗时：暂无 · 粒子数：暂无\n%s"),
+        Data.FPS, Data.FrameTimeMs, Data.ActiveVFXCount, Data.ManagedVFXCount, Data.ActiveNiagaraSystems, *EnumLabel(Data.Quality), Data.CurrentTestCount, *Data.ProfilingNote)));
     StatusText->SetText(FText::FromString(Controller->LastMessage));
-    LoopLabel->SetText(FText::FromString(Controller->bLoop ? TEXT("Loop: ON") : TEXT("Loop: OFF")));
-    AutoLabel->SetText(FText::FromString(Controller->bAutoPreview ? TEXT("Auto Preview: ON") : TEXT("Auto Preview: OFF")));
+    LoopLabel->SetText(FText::FromString(Controller->bLoop ? TEXT("循环：开启") : TEXT("循环：关闭")));
+    AutoLabel->SetText(FText::FromString(Controller->bAutoPreview ? TEXT("自动预览：开启") : TEXT("自动预览：关闭")));
     bUpdating = true;
     if (QualityChoice->GetSelectedOption() != EnumName(Controller->Quality)) QualityChoice->SetSelectedOption(EnumName(Controller->Quality));
     if (BackgroundChoice->GetSelectedOption() != EnumName(Controller->Background)) BackgroundChoice->SetSelectedOption(EnumName(Controller->Background));

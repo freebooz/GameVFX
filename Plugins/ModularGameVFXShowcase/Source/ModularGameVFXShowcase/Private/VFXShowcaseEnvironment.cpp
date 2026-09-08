@@ -1,8 +1,12 @@
 #include "VFXShowcaseEnvironment.h"
+#include "VFXShowcaseLocalization.h"
 #include "Camera/CameraComponent.h"
 #include "Components/DirectionalLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
+#include "Components/WidgetComponent.h"
+#include "Styling/CoreStyle.h"
+#include "Widgets/Text/STextBlock.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
@@ -30,6 +34,39 @@ void AddLabel(AActor* Owner, FName Name, const FString& Text, FVector Location, 
     Label->SetRelativeRotation(FRotator(0,-90,0));
     Label->SetWorldSize(45);
     Label->SetTextRenderColor(Color);
+}
+void CreateChineseHUDLabels(AActor* Owner)
+{
+    // Runtime Slate font fallback supports Chinese; the engine's offline 3D font does not.
+    // Keep existing serialized components and replace only their runtime presentation.
+    const TMap<FName,FString> Captions={
+        {TEXT("OriginLabel"),TEXT("起点")},{TEXT("TargetLabel"),TEXT("目标")},
+        {TEXT("RigLabel"),TEXT("程序化附着测试架")},
+        {TEXT("StageTitle"),TEXT("特效展示区 · 100 厘米 = 1 米")},
+        {TEXT("StressTitle"),TEXT("压力测试区")},{TEXT("EnvironmentTitle"),TEXT("环境测试区")},
+        {TEXT("NearDistance"),TEXT("近距 2.5 米")},{TEXT("MediumDistance"),TEXT("中距 10 米")},
+        {TEXT("FarDistance"),TEXT("远距 40 米")},
+        {TEXT("GridLabel100"),TEXT("1 米")},{TEXT("GridLabel200"),TEXT("2 米")},
+        {TEXT("GridLabel500"),TEXT("5 米")},{TEXT("GridLabel1000"),TEXT("10 米")}};
+    TInlineComponentArray<UTextRenderComponent*> Labels(Owner);
+    for(UTextRenderComponent* Original:Labels)
+    {
+        const FString* Caption=Captions.Find(Original->GetFName());
+        if(!Caption)continue;
+        Original->SetHiddenInGame(true);
+        UWidgetComponent* HUD=NewObject<UWidgetComponent>(Owner);
+        Owner->AddInstanceComponent(HUD);
+        HUD->SetupAttachment(Original);
+        HUD->SetWidgetSpace(EWidgetSpace::Screen);
+        HUD->SetDrawAtDesiredSize(true);
+        HUD->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        HUD->SetSlateWidget(SNew(STextBlock).Text(FText::FromString(*Caption))
+            .Font(FCoreStyle::GetDefaultFontStyle(TEXT("Regular"),VFXShowcaseUI::FontSize))
+            .ColorAndOpacity(FLinearColor(.65f,.91f,1.f))
+            .ShadowColorAndOpacity(FLinearColor(0,0,0,.85f)).ShadowOffset(FVector2D(1,1))
+            .Visibility(EVisibility::HitTestInvisible));
+        HUD->RegisterComponent();
+    }
 }
 }
 AVFXTestOrigin::AVFXTestOrigin()
@@ -113,6 +150,8 @@ void AVFXShowcaseEnvironment::BeginPlay()
     Character=GetWorld()->SpawnActor<AVFXTestCharacter>(GetActorLocation()+FVector(0,-250,0),FRotator::ZeroRotator);
     for(AActor* Actor : {static_cast<AActor*>(Origin),static_cast<AActor*>(Target),static_cast<AActor*>(ProjectileTarget),static_cast<AActor*>(Character)})
         if(Actor){Actor->SetOwner(this); Actor->AttachToActor(this,FAttachmentTransformRules::KeepWorldTransform); SpawnedActors.Add(Actor);}
+    CreateChineseHUDLabels(this);
+    for(AActor* Actor:SpawnedActors)CreateChineseHUDLabels(Actor);
     if(APlayerController* PC=UGameplayStatics::GetPlayerController(this,0)) PC->SetViewTarget(this);
 }
 void AVFXShowcaseEnvironment::EndPlay(const EEndPlayReason::Type Reason)

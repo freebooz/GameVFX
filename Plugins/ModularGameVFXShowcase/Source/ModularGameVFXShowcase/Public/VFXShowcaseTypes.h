@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "CoreMinimal.h"
 #include "VFXTypes.h"
 #include "VFXShowcaseTypes.generated.h"
@@ -102,7 +102,7 @@ struct MODULARGAMEVFXSHOWCASE_API FVFXShowcasePerformance
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 ActiveNiagaraSystems = 0;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly) int32 CurrentTestCount = 0;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly) EVFXShowcaseQuality Quality = EVFXShowcaseQuality::High;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly) FString ProfilingNote = TEXT("CPU/GPU/particles: unavailable; target-device profiling required.");
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly) FString ProfilingNote = TEXT("处理器、图形处理器耗时与粒子数尚未测量，请在目标设备进行性能分析。");
 };
 
 USTRUCT(BlueprintType)
