@@ -28,6 +28,8 @@
 #include "CanvasItem.h"
 #include "Fonts/SlateFontInfo.h"
 #include "Fonts/CompositeFont.h"
+#include "Engine/Font.h"
+#include "UObject/StrongObjectPtr.h"
 
 namespace FM {
 template<class T> T* Asset(const TCHAR* Path) { ConstructorHelpers::FObjectFinder<T> F(Path); return F.Object; }
@@ -59,11 +61,16 @@ FString ChineseStatus(FString Text){
  return Text;
 }
 const FSlateFontInfo& CombatFont(){
- // Explicit runtime CJK fallback also works when the editor culture is English.
+ // UE5.8 Canvas requires FontInfo.FontObject to be a UFont even when composite
+ // data is supplied. A composite-only SlateFontInfo fails HasValidText silently.
  static const FSlateFontInfo Font=[](){
-  auto Composite=MakeShared<FStandaloneCompositeFont>(NAME_None,FPaths::EngineContentDir()/TEXT("Slate/Fonts/Roboto-Regular.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
-  Composite->FallbackTypeface.Typeface.Fonts.Emplace(NAME_None,FPaths::EngineContentDir()/TEXT("Slate/Fonts/DroidSansFallback.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
-  return FSlateFontInfo(Composite,12.f);
+  static TStrongObjectPtr<UFont> RuntimeFont(NewObject<UFont>(GetTransientPackage(),NAME_None,RF_Transient));
+  RuntimeFont->FontCacheType=EFontCacheType::Runtime;
+  RuntimeFont->LegacyFontSize=12;
+  FCompositeFont& Composite=RuntimeFont->GetMutableInternalCompositeFont();
+  Composite.DefaultTypeface.Fonts.Emplace(NAME_None,FPaths::EngineContentDir()/TEXT("Slate/Fonts/Roboto-Regular.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
+  Composite.FallbackTypeface.Typeface.Fonts.Emplace(NAME_None,FPaths::EngineContentDir()/TEXT("Slate/Fonts/DroidSansFallback.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
+  return FSlateFontInfo(RuntimeFont.Get(),12.f);
  }();
  return Font;
 }

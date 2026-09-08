@@ -1,6 +1,7 @@
 #include "Modules/ModuleManager.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "UObject/Package.h"
 #include "Kismet/GameplayStatics.h"
 #include "VFXShowcaseController.h"
 #include "VFXShowcaseProfile.h"

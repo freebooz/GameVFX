@@ -172,7 +172,7 @@ void AVFXShowcaseEnvironment::Tick(float DeltaSeconds)
     for(UWidgetComponent* Label:HUDLabels)
     {
         if(!IsValid(Label))continue;
-        FVector2D Position;
+        FVector2D Position=FVector2D::ZeroVector;
         bool bShow=PC&&PC->ProjectWorldLocationToScreen(Label->GetComponentLocation(),Position,true);
         FVector2D HalfSize(100.f*UIScale,12.f*UIScale);
         if(Label->GetSlateWidget().IsValid())
