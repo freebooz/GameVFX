@@ -27,6 +27,7 @@
 #include "Misc/Paths.h"
 #include "CanvasItem.h"
 #include "Fonts/SlateFontInfo.h"
+#include "Fonts/CompositeFont.h"
 
 namespace FM {
 template<class T> T* Asset(const TCHAR* Path) { ConstructorHelpers::FObjectFinder<T> F(Path); return F.Object; }
@@ -56,6 +57,15 @@ FString ChineseStatus(FString Text){
  };
  for(const auto& Pair:Translations)Text.ReplaceInline(Pair.Key,Pair.Value,ESearchCase::CaseSensitive);
  return Text;
+}
+const FSlateFontInfo& CombatFont(){
+ // Explicit runtime CJK fallback also works when the editor culture is English.
+ static const FSlateFontInfo Font=[](){
+  auto Composite=MakeShared<FStandaloneCompositeFont>(NAME_None,FPaths::EngineContentDir()/TEXT("Slate/Fonts/Roboto-Regular.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
+  Composite->FallbackTypeface.Typeface.Fonts.Emplace(NAME_None,FPaths::EngineContentDir()/TEXT("Slate/Fonts/DroidSansFallback.ttf"),EFontHinting::Default,EFontLoadingPolicy::LazyLoad);
+  return FSlateFontInfo(Composite,12.f);
+ }();
+ return Font;
 }
 }
 
@@ -361,7 +371,7 @@ void AFMPlayerController::PlayerTick(float D){Super::PlayerTick(D);auto* P=Cast<
   bWasDebugUIInteractive=bDebugInteractive;
   bLeftMouseHeld=bRightMouseHeld=bOrbiting=bAutoRun=false;
   bLeftMouseDragged=bRightMouseDragged=false;LeftMouseTravel=RightMouseTravel=0;
-  P->SetMovementIntent(0,0);P->GetCharacterMovement()->StopMovementImmediately();P->bAutoAttacking=false;
+  P->SetMovementIntent(0,0);P->StopJumping();P->GetCharacterMovement()->StopMovementImmediately();P->bAutoAttacking=false;
   if(bDebugInteractive)return;
  }
  if(bOrbiting){float X=0,Y=0;GetInputMouseDelta(X,Y);
@@ -428,45 +438,48 @@ void AFMPlayerController::ZoomOut(){ZoomGoal=FMath::Min(1250.f,ZoomGoal+70);}
 void AFMPlayerController::Cancel(){if(auto* P=Cast<AFMFrostMage>(GetPawn())){if(P->CastingSpell)P->CancelCast();else{if(IsValid(P->Target))P->Target->bSelected=false;P->Target=nullptr;P->bAutoAttacking=false;}}}
 
 void AFMFrostHUD::DrawHUD(){Super::DrawHUD();if(!Canvas)return;auto* P=Cast<AFMFrostMage>(GetOwningPawn());if(!P)return;
- const float W=Canvas->SizeX,H=Canvas->SizeY;UFont* Font=GEngine->GetMediumFont();
- auto Label=[&](const FString& S,float X,float Y,float Scale,FLinearColor C=FLinearColor(.72f,.83f,.94f)){DrawText(S,C,X,Y,Font,Scale,false);};
- DrawRect(FLinearColor(.006f,.012f,.024f,.8f),20,20,335,67);Label(TEXT("E M B E R  &  F R O S T"),36,28,1.25f,FLinearColor(.65f,.85f,1));Label(TEXT("THIRD PERSON  /  SPELL TEST GROUNDS"),36,59,.72f);
+ if(GetOwningPlayerController()&&GetOwningPlayerController()->ActorHasTag(TEXT("VFXShowcaseUIInteractive")))return;
+ const float W=Canvas->SizeX,H=Canvas->SizeY;
+ // The retained call-site scale argument is deliberately ignored: all HUD text is 12pt.
+ auto Label=[&](const FString& S,float X,float Y,float,FLinearColor C=FLinearColor(.84f,.92f,1.f)){
+  FCanvasTextItem Item(FVector2D(X,Y),FText::FromString(S),FM::CombatFont(),C);
+  Item.EnableShadow(FLinearColor(0,0,0,.85f));Canvas->DrawItem(Item);
+ };
+ Label(TEXT("冰霜与烈焰 · 战斗演示"),36,28,1.f,FLinearColor(.65f,.85f,1));Label(TEXT("F1：特效调试 / 返回战斗"),36,55,1.f);
  if(IsValid(P->Target)&&P->Target->Health>0){
-  const float X=W/2-155;DrawRect(FLinearColor(.008f,.012f,.026f,.92f),X,24,310,64);Label(TEXT("MOONSTONE GOLEM"),X+14,30,.95f,FLinearColor(.87f,.70f,1));
+  const float X=W/2-155;Label(TEXT("月石傀儡"),X+14,30,1.f,FLinearColor(.87f,.70f,1));
   DrawRect(FLinearColor(.15f,.10f,.22f,1),X+14,57,282,10);DrawRect(FLinearColor(.52f,.25f,.79f,1),X+14,57,282*P->Target->Health/100,10);
-  FString State=P->Target->FrozenRemaining>0?FString::Printf(TEXT("FROZEN  %.1fs"),P->Target->FrozenRemaining):(P->Target->CastRemaining>0?FString::Printf(TEXT("CASTING FROSTBOLT  %.1fs"),P->Target->CastRemaining):(P->Target->bChasing?TEXT("PURSUING YOU"):TEXT("WANDERING")));Label(State,X+14,72,.67f);
+  FString State=P->Target->FrozenRemaining>0?FString::Printf(TEXT("冻结：%.1f秒"),P->Target->FrozenRemaining):(P->Target->CastRemaining>0?FString::Printf(TEXT("寒冰箭施法：%.1f秒"),P->Target->CastRemaining):(P->Target->bChasing?TEXT("正在追击"):TEXT("正在游荡")));Label(State,X+14,72,1.f);
  }
  const int Cols=W<1280?4:8,Rows=Cols==4?2:1;
  const float CardW=FMath::Min(170.f,(W-64-(Cols-1)*8)/Cols),Gap=8,BarW=Cols*CardW+(Cols-1)*Gap;
  const float X=(W-BarW)/2,Y=H-102-(Rows-1)*72;
- DrawRect(FLinearColor(.004f,.009f,.022f,.91f),X-10,Y-10,BarW+20,Rows*72+12);
- const TCHAR* Names[]={TEXT("FROSTBOLT"),TEXT("FROST NOVA"),TEXT("ROSE BLOOM"),TEXT("HEALING BLOOM"),TEXT("FIREBALL"),TEXT("FIRE BLAST"),TEXT("FLAMESTRIKE"),TEXT("ARCANE MISSILES")};
- const TCHAR* Hints[]={TEXT("24m / Cast 1.5s"),TEXT("Instant / Root 5s"),TEXT("Petals / 6s"),TEXT("+12 HP/s / 6s"),TEXT("30 dmg / 1.8s"),TEXT("22 dmg / Instant"),TEXT("AoE + burn / 2s"),TEXT("5 bolts / Channel")};
+ const TCHAR* Names[]={TEXT("寒冰箭"),TEXT("冰霜新星"),TEXT("绯樱花瓣"),TEXT("翡翠治疗"),TEXT("火球术"),TEXT("火焰冲击"),TEXT("烈焰风暴"),TEXT("奥术飞弹")};
+ const TCHAR* Hints[]={TEXT("24米 · 1.5秒"),TEXT("冻结5秒"),TEXT("持续6秒"),TEXT("每秒恢复12"),TEXT("30伤害"),TEXT("瞬发22伤害"),TEXT("范围灼烧"),TEXT("引导5枚")};
  const float CDs[]={P->BoltCooldown,P->NovaCooldown,P->PetalCooldown,P->HealingCooldown,P->FireballCooldown,P->FireBlastCooldown,P->FlamestrikeCooldown,P->ArcaneCooldown};
  const float MaxCDs[]={.65f,6.f,8.f,8.f,.5f,8.f,10.f,4.f};
  for(int i=0;i<8;i++){
   const float SX=X+(i%Cols)*(CardW+Gap),SY=Y+(i/Cols)*72,CD=CDs[i];
   const FLinearColor Accent=i==7?FLinearColor(.64f,.28f,1.f):(i>=4?FLinearColor(1,.32f,.065f):(i==3?FLinearColor(.13f,.82f,.58f):(i==2?FLinearColor(.98f,.28f,.58f):FLinearColor(.19f,.49f,.72f))));
-  DrawRect(i>=4?FLinearColor(.16f,.044f,.018f,.96f):FLinearColor(.03f,.10f,.18f,.96f),SX,SY,CardW,62);DrawRect(Accent,SX,SY,3,62);
-  if(CD>0)DrawRect(FLinearColor(.003f,.009f,.025f,.60f),SX,SY,CardW*FMath::Clamp(CD/MaxCDs[i],0.f,1.f),62);
+  DrawRect(FLinearColor(.015f,.03f,.05f,.10f),SX,SY,CardW,62);DrawRect(Accent,SX,SY,2,62);
+  if(CD>0)DrawRect(FLinearColor(.003f,.009f,.025f,.28f),SX,SY,CardW*FMath::Clamp(CD/MaxCDs[i],0.f,1.f),62);
   Label(FString::FromInt(i+1),SX+9,SY+9,1.3f,Accent);Label(Names[i],SX+33,SY+9,.71f);
-  Label(CD>0?FString::Printf(TEXT("%.1fs"),CD):Hints[i],SX+33,SY+35,.64f,CD>0?FLinearColor(.9f,.69f,.3f):FLinearColor(.58f,.70f,.82f));
+  Label(CD>0?FString::Printf(TEXT("冷却%.1f秒"),CD):Hints[i],SX+9,SY+35,1.f,CD>0?FLinearColor(.9f,.69f,.3f):FLinearColor(.74f,.85f,.94f));
  }
  if(P->CastingSpell){
-  const float BX=W/2-185,BY=Y-47;DrawRect(FLinearColor(.006f,.013f,.03f,.9f),BX,BY,370,24);
+  const float BX=W/2-185,BY=Y-47;DrawRect(FLinearColor(.006f,.013f,.03f,.15f),BX,BY,370,24);
   const FLinearColor Tint=P->CastingSpell==8?FLinearColor(.48f,.15f,.95f,.9f):(P->CastingSpell>=5?FLinearColor(.95f,.26f,.025f,.9f):(P->CastingSpell==4?FLinearColor(.06f,.70f,.42f,.9f):FLinearColor(.17f,.56f,.88f,.9f)));
   DrawRect(Tint,BX+2,BY+2,366*(P->CastingSpell==8?P->CastRemaining/FMath::Max(.01f,P->CastDuration):1-P->CastRemaining/FMath::Max(.01f,P->CastDuration)),20);
-  const TCHAR* CastNames[]={TEXT(""),TEXT("Conjuring Frostbolt..."),TEXT("Unleashing Frost Nova..."),TEXT("Summoning Rose Bloom..."),TEXT("Invoking Healing Bloom..."),TEXT("Conjuring Fireball..."),TEXT("Fire Blast"),TEXT("Calling Flamestrike..."),TEXT("Channeling Arcane Missiles...")};
+  const TCHAR* CastNames[]={TEXT(""),TEXT("正在凝聚寒冰箭"),TEXT("正在释放冰霜新星"),TEXT("正在召唤绯樱花瓣"),TEXT("正在施放翡翠治疗"),TEXT("正在凝聚火球"),TEXT("火焰冲击"),TEXT("正在施放烈焰风暴"),TEXT("正在引导奥术飞弹")};
   Label(CastNames[FMath::Clamp(P->CastingSpell,0,8)],BX+10,BY+2,.8f);
  }
- DrawRect(FLinearColor(.006f,.012f,.024f,.85f),20,99,335,68);
- Label(FString::Printf(TEXT("HEALTH  %.0f / %.0f"),P->Health,P->MaxHealth),36,106,.85f);
+ Label(FString::Printf(TEXT("生命：%.0f / %.0f"),P->Health,P->MaxHealth),36,106,1.f);
  DrawRect(FLinearColor(.04f,.14f,.12f,1),36,132,303,10);DrawRect(FLinearColor(.1f,.8f,.45f,1),36,132,303*FMath::Clamp(P->Health/FMath::Max(1.f,P->MaxHealth),0.f,1.f),10);
- if(P->HealingRemaining>0)Label(FString::Printf(TEXT("REGENERATING  +12 HP/s  %.1fs"),P->HealingRemaining),36,148,.70f,FLinearColor(.25f,1,.65f));
- else if(P->ChilledRemaining>0)Label(TEXT("CHILLED  /  Movement slowed"),36,148,.70f);
- if(P->Health<=0)Label(FString::Printf(TEXT("RECOVERING  %.1fs"),P->RespawnRemaining),W/2-130,H/2,1.3f,FLinearColor(1,.35f,.45f));
- if(P->StatusRemaining>0)Label(P->StatusMessage,W/2-220,Y-79,.82f,FLinearColor(.66f,.86f,1));
- Label(TEXT("W/S Move   A/D Turn   Q/E Strafe   LMB Select/Look   RMB Steer   Both Mouse Run   Wheel Zoom"),24,H-28,.66f);
+ if(P->HealingRemaining>0)Label(FString::Printf(TEXT("每秒恢复12生命：剩余%.1f秒"),P->HealingRemaining),36,148,1.f,FLinearColor(.25f,1,.65f));
+ else if(P->ChilledRemaining>0)Label(TEXT("冰冷状态：移动减速"),36,148,1.f);
+ if(P->Health<=0)Label(FString::Printf(TEXT("恢复中：%.1f秒"),P->RespawnRemaining),W/2-130,H/2,1.f,FLinearColor(1,.35f,.45f));
+ if(P->StatusRemaining>0)Label(FM::ChineseStatus(P->StatusMessage),W/2-220,Y-79,1.f,FLinearColor(.66f,.86f,1));
+ Label(W<1280?TEXT("W/S移动　A/D转向　Q/E平移　鼠标选敌/转向　滚轮缩放　F1调试"):TEXT("W/S移动　A/D转向　Q/E平移　左键选敌/视角　右键转向/攻击　双键前进　滚轮缩放　F1调试"),24,H-28,1.f);
 }
 AFMFrostGameMode::AFMFrostGameMode(){DefaultPawnClass=AFMFrostMage::StaticClass();PlayerControllerClass=AFMPlayerController::StaticClass();HUDClass=AFMFrostHUD::StaticClass();}
 void AFMFrostGameMode::BeginPlay(){Super::BeginPlay();bool HasMonster=false;for(TActorIterator<AFMFrostMonster> I(GetWorld());I;++I)HasMonster=true;if(!HasMonster){FActorSpawnParameters P;P.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;GetWorld()->SpawnActor<AFMFrostMonster>(AFMFrostMonster::StaticClass(),FVector(700,0,122),FRotator(0,180,0),P);}}

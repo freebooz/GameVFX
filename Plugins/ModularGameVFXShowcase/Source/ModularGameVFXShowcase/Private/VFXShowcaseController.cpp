@@ -3,6 +3,7 @@
 #include "VFXShowcaseWidget.h"
 #include "VFXShowcaseLocalization.h"
 #include "Blueprint/WidgetTree.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/ComboBoxString.h"
 #include "Components/EditableTextBox.h"
 #include "Components/MultiLineEditableTextBox.h"
@@ -117,7 +118,8 @@ void AVFXShowcaseController::BeginPlay()
             if(!bUseExistingCombatWorld&&Environment) PC->SetViewTarget(Environment);
         }
     }
-    if(FParse::Param(FCommandLine::Get(),TEXT("VFXShowcaseSmokeTest"))) StartSmokeTest();
+    if(bUseExistingCombatWorld&&FParse::Param(FCommandLine::Get(),TEXT("VFXShowcaseCombatSmokeTest")))StartCombatSmokeTest();
+    else if(!bUseExistingCombatWorld&&FParse::Param(FCommandLine::Get(),TEXT("VFXShowcaseSmokeTest")))StartSmokeTest();
 }
 void AVFXShowcaseController::ApplyHUDInteraction()
 {
@@ -128,6 +130,7 @@ void AVFXShowcaseController::ApplyHUDInteraction()
         if(bHUDInteractive)PC->Tags.AddUnique(Tag);else PC->Tags.Remove(Tag);
         PC->bShowMouseCursor=true;
         FInputModeGameAndUI Mode;Mode.SetHideCursorDuringCapture(false);PC->SetInputMode(Mode);
+        if(!bHUDInteractive)UWidgetBlueprintLibrary::SetFocusToGameViewport();
     }
 }
 void AVFXShowcaseController::ToggleHUDInteraction()
@@ -624,6 +627,35 @@ void AVFXShowcaseController::CaptureSmokeStage(const FString& Stage,bool bScreen
     Root->SetBoolField(TEXT("screenshotRequested"),bScreenshot);
     Root->SetBoolField(TEXT("widgetPresent"),IsValid(LiveWidget));
     Root->SetBoolField(TEXT("entryDispatchedThroughWidget"),bSmokeImpactSelected);
+    Root->SetBoolField(TEXT("bCombatWorld"),bUseExistingCombatWorld);
+    Root->SetBoolField(TEXT("bHUDInteractive"),bHUDInteractive);
+    Root->SetBoolField(TEXT("hudCollapsed"),!LiveWidget||LiveWidget->GetVisibility()==ESlateVisibility::Collapsed);
+    Root->SetNumberField(TEXT("controllerHandleCount"),Handles.Num());
+    int32 ValidHandles=0;
+    for(const FVFXHandle& Handle:Handles)ValidHandles+=UModularGameVFXBlueprintLibrary::IsVFXHandleValid(this,Handle)?1:0;
+    Root->SetNumberField(TEXT("controllerValidHandleCount"),ValidHandles);
+    if(APlayerController* PC=UGameplayStatics::GetPlayerController(this,0))
+    {
+        APawn* Pawn=PC->GetPawn();AActor* View=PC->GetViewTarget();
+        Root->SetBoolField(TEXT("inputGateTag"),PC->Tags.Contains(FName(TEXT("VFXShowcaseUIInteractive"))));
+        Root->SetStringField(TEXT("pawnClass"),Pawn?Pawn->GetClass()->GetPathName():TEXT(""));
+        Root->SetStringField(TEXT("viewTargetClass"),View?View->GetClass()->GetPathName():TEXT(""));
+        Root->SetStringField(TEXT("pawnPath"),Pawn?Pawn->GetPathName():TEXT(""));
+        Root->SetStringField(TEXT("viewTargetPath"),View?View->GetPathName():TEXT(""));
+        if(Pawn)
+        {
+            if(const FFloatProperty* Health=FindFProperty<FFloatProperty>(Pawn->GetClass(),TEXT("Health")))
+                Root->SetNumberField(TEXT("playerHealth"),Health->GetPropertyValue_InContainer(Pawn));
+            if(const FObjectPropertyBase* Property=FindFProperty<FObjectPropertyBase>(Pawn->GetClass(),TEXT("Target")))
+                if(AActor* Target=Cast<AActor>(Property->GetObjectPropertyValue_InContainer(Pawn)))
+                    Root->SetStringField(TEXT("selectedTargetPath"),Target->GetPathName());
+        }
+    }
+    int32 MonsterCount=0;
+    for(TActorIterator<AActor> It(GetWorld());It;++It)
+        for(UClass* Class=It->GetClass();Class;Class=Class->GetSuperClass())
+            if(Class->GetFName()==FName(TEXT("FMFrostMonster"))){++MonsterCount;break;}
+    Root->SetNumberField(TEXT("hostMonsterCount"),MonsterCount);
     if(LiveWidget&&LiveWidget->WidgetTree)
     {
         int32 TextControls=0;TArray<TSharedPtr<FJsonValue>> FontMismatches,ChoiceCaptions;
@@ -686,6 +718,34 @@ void AVFXShowcaseController::CaptureSmokeStage(const FString& Stage,bool bScreen
         *Stage,Snapshot.ManagedVFXCount,Snapshot.ActiveVFXCount,Snapshot.CurrentTestCount,bScreenshot);
 }
 
+void AVFXShowcaseController::StartCombatSmokeTest()
+{
+    // Explicit opt-in only; record the host world separately from showcase-owned handles.
+    ScheduleSmokeAction(2.f,[this](){CaptureSmokeStage(TEXT("CombatInitial"),true);});
+    ScheduleSmokeAction(5.f,[this]()
+    {
+        if(!bHUDInteractive)ToggleHUDInteraction();
+        if(UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget))
+            if(const FVFXShowcaseEntry* Impact=AllEntries.FindByPredicate([](const FVFXShowcaseEntry& Row){return Row.Category==EVFXCategory::Impact&&Row.VFXTag.IsValid();}))
+            {
+                const FGameplayTag Tag=Impact->VFXTag;
+                Widget->ExecuteAction(TEXT("Category:Impact"));Widget->ExecuteAction(TEXT("Entry:")+Tag.ToString());
+                bSmokeImpactSelected=SelectedTag==Tag;
+            }
+        ScheduleSmokeAction(.15f,[this](){CaptureSmokeStage(TEXT("CombatHUDPlay"),true);});
+    });
+    ScheduleSmokeAction(10.f,[this]()
+    {
+        if(bSmokeImpactSelected)if(UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget))Widget->ExecuteAction(TEXT("Stress:10"));
+        ScheduleSmokeAction(.15f,[this](){CaptureSmokeStage(TEXT("CombatStress10"),true);});
+    });
+    ScheduleSmokeAction(15.f,[this]()
+    {
+        Stop(true);if(bHUDInteractive)ToggleHUDInteraction();
+        ScheduleSmokeAction(.3f,[this](){CaptureSmokeStage(TEXT("CombatReturned"),true);});
+    });
+    ScheduleSmokeAction(20.f,[this](){CaptureSmokeStage(TEXT("CombatExit"),false);FPlatformMisc::RequestExit(false);});
+}
 void AVFXShowcaseController::StartSmokeTest()
 {
     // Explicit command-line opt-in only. Weak delegates are canceled on EndPlay;

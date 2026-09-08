@@ -106,6 +106,7 @@ private:
     bool bSmokeImpactSelected = false;
     void ScheduleSmokeAction(float Delay, TFunction<void()> Action);
     void StartSmokeTest();
+    void StartCombatSmokeTest();
     void CaptureSmokeStage(const FString& Stage, bool bScreenshot);
     FVFXHandle SpawnPreview(FGameplayTag Tag, const FVector& Offset, bool bStress);
     void ClearPlayback(bool bImmediate);
