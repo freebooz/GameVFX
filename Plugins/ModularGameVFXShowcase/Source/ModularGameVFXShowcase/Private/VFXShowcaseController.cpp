@@ -20,6 +20,12 @@
 #include "NiagaraEmitterHandle.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/InputComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/Pawn.h"
+#include "InputCoreTypes.h"
+#include "CollisionQueryParams.h"
+#include "UObject/UnrealType.h"
 #include "EngineUtils.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
@@ -83,9 +89,12 @@ AVFXShowcaseController::AVFXShowcaseController()
 void AVFXShowcaseController::BeginPlay()
 {
     Super::BeginPlay();
-    if(!Environment)
-        for(TActorIterator<AVFXShowcaseEnvironment> It(GetWorld());It;++It){Environment=*It;break;}
-    if(!Environment) Environment=GetWorld()->SpawnActor<AVFXShowcaseEnvironment>();
+    if(!bUseExistingCombatWorld)
+    {
+        if(!Environment)
+            for(TActorIterator<AVFXShowcaseEnvironment> It(GetWorld());It;++It){Environment=*It;break;}
+        if(!Environment) Environment=GetWorld()->SpawnActor<AVFXShowcaseEnvironment>();
+    }
     RefreshCatalog();
     LastTickTime=FPlatformTime::Seconds();
     SavedTimeDilation=UGameplayStatics::GetGlobalTimeDilation(this);
@@ -97,15 +106,50 @@ void AVFXShowcaseController::BeginPlay()
             LiveWidget=CreateWidget<UUserWidget>(PC,Class);
             if(UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget)) Widget->Controller=this;
             if(LiveWidget) LiveWidget->AddToViewport();
-            PC->bShowMouseCursor=true;
-            FInputModeGameAndUI InputMode; InputMode.SetHideCursorDuringCapture(false); PC->SetInputMode(InputMode);
-            if(Environment) PC->SetViewTarget(Environment);
+            bHUDInteractive=!bUseExistingCombatWorld;
+            ApplyHUDInteraction();
+            EnableInput(PC);
+            if(InputComponent)
+            {
+                InputComponent->bBlockInput=false;
+                InputComponent->BindKey(EKeys::F1,IE_Pressed,this,&AVFXShowcaseController::ToggleHUDInteraction).bConsumeInput=false;
+            }
+            if(!bUseExistingCombatWorld&&Environment) PC->SetViewTarget(Environment);
         }
     }
     if(FParse::Param(FCommandLine::Get(),TEXT("VFXShowcaseSmokeTest"))) StartSmokeTest();
 }
+void AVFXShowcaseController::ApplyHUDInteraction()
+{
+    if(LiveWidget) LiveWidget->SetVisibility(bHUDInteractive?ESlateVisibility::Visible:ESlateVisibility::Collapsed);
+    if(APlayerController* PC=UGameplayStatics::GetPlayerController(this,0))
+    {
+        const FName Tag(TEXT("VFXShowcaseUIInteractive"));
+        if(bHUDInteractive)PC->Tags.AddUnique(Tag);else PC->Tags.Remove(Tag);
+        PC->bShowMouseCursor=true;
+        FInputModeGameAndUI Mode;Mode.SetHideCursorDuringCapture(false);PC->SetInputMode(Mode);
+    }
+}
+void AVFXShowcaseController::ToggleHUDInteraction()
+{
+    bHUDInteractive=!bHUDInteractive;ApplyHUDInteraction();
+    LastMessage=bHUDInteractive?TEXT("特效调试已打开；按 F1 返回战斗操作，怪物仍继续行动。"):TEXT("特效调试已收起；按 F1 再次打开。");
+    OnChanged.Broadcast();
+}
+bool AVFXShowcaseController::RejectCombatWorldControl()
+{
+    if(!bUseExistingCombatWorld)return false;
+    LastMessage=TEXT("当前使用原战斗关卡；场景、镜头、全局慢放和测试角色动作仅在独立展示关卡中可修改。");
+    OnChanged.Broadcast();return true;
+}
 void AVFXShowcaseController::EndPlay(const EEndPlayReason::Type Reason)
 {
+    bHUDInteractive=false;
+    if(APlayerController* PC=UGameplayStatics::GetPlayerController(this,0))
+    {
+        PC->Tags.Remove(FName(TEXT("VFXShowcaseUIInteractive")));
+        DisableInput(PC);
+    }
     ClearPlayback(true);
     if(LiveWidget) LiveWidget->RemoveFromParent();
     if(bChangedTimeDilation) UGameplayStatics::SetGlobalTimeDilation(this,SavedTimeDilation);
@@ -241,7 +285,7 @@ bool AVFXShowcaseController::Play(){return Replay();}
 bool AVFXShowcaseController::Replay()
 {
     ClearPlayback(true);SequenceElapsed=0;MotionElapsed=0;TestCount=1;
-    if(Environment)Environment->FocusStress(false);
+    if(!bUseExistingCombatWorld&&Environment)Environment->FocusStress(false);
     const bool bSuccess=SpawnPreview(SelectedTag,FVector::ZeroVector,false).IsValid();OnChanged.Broadcast();return bSuccess;
 }
 void AVFXShowcaseController::ClearPlayback(bool bImmediate)
@@ -249,35 +293,84 @@ void AVFXShowcaseController::ClearPlayback(bool bImmediate)
     UModularGameVFXBlueprintLibrary::StopAllVFXForOwner(this,this,bImmediate);
     Handles.Reset();MovingAnchors.Reset();AnchorStartTimes.Reset();AnchorStartLocations.Reset();AnchorTargetLocations.Reset();
     // Attached systems must finish before their anchors are destroyed on graceful stop.
-    if(bImmediate){for(USceneComponent* Anchor:PreviewAnchors)if(Anchor)Anchor->DestroyComponent();PreviewAnchors.Reset();}
+    if(bImmediate){for(USceneComponent* Anchor:PreviewAnchors)if(Anchor)Anchor->DestroyComponent();PreviewAnchors.Reset();CombatScreenAnchors.Reset();}
     TestCount=0;
 }
 void AVFXShowcaseController::Stop(bool bImmediate)
 {bLoop=false;bAutoPreview=false;ClearPlayback(bImmediate);LastMessage=bImmediate?TEXT("已立即停止。"):TEXT("已停止新增播放，正在等待现有效果自然结束。");OnChanged.Broadcast();}
 FVFXHandle AVFXShowcaseController::SpawnPreview(FGameplayTag Tag,const FVector& Offset,bool bStress)
 {
-    if(!GetWorld()||!GetWorld()->GetGameInstance()||!Environment||!LoadedCatalog)return FVFXHandle();
+    if(!GetWorld()||!GetWorld()->GetGameInstance()||(!bUseExistingCombatWorld&&!Environment)||!LoadedCatalog)return FVFXHandle();
     if(Catalog.ToSoftObjectPath()!=GetDefault<UModularGameVFXSettings>()->DefaultCatalog.ToSoftObjectPath())
     {LastMessage=TEXT("无法播放：展示目录必须与管理器默认目录一致。");return FVFXHandle();}
     const FVFXCatalogEntry* Entry=LoadedCatalog->FindEntryNative(Tag);if(!Entry)return FVFXHandle();
     const FVFXShowcaseProfileEntry Preview=ResolveProfile(*Entry);
     FVFXPlayRequest Request;Request.VFXTag=Tag;Request.Owner=this;Request.ParameterOverrides=Tag==SelectedTag?Parameters:Entry->DefaultParameters;
-    FVector Source=Environment->GetOriginPoint()+Offset;
-    FVector Target=Environment->GetTargetPoint(PreviewDistance)+Offset;
-    if(bStress){Source=Environment->GetStressPoint()+Offset;Target=Source+FVector(300,0,100);}
+    APlayerController* PC=UGameplayStatics::GetPlayerController(this,0);
+    APawn* Player=PC?PC->GetPawn():nullptr;
+    FVector Source,Target,Ground;
+    FVector GroundNormal=FVector::UpVector;
+    FVector PreviewOffset=Offset;
+    if(bUseExistingCombatWorld)
+    {
+        if(!IsValid(Player)){LastMessage=TEXT("当前战斗关卡没有可用玩家，无法定位特效预览。");return FVFXHandle();}
+        const FVector Forward=Player->GetActorForwardVector().GetSafeNormal();
+        AActor* CombatTarget=nullptr;
+        PreviewOffset=Forward*Offset.X+Player->GetActorRightVector()*Offset.Y+FVector::UpVector*Offset.Z;
+        Source=Player->GetActorLocation();Target=Source+Forward*PreviewDistance;
+        // Optional host convention, resolved via reflection to avoid a dependency on the demo module.
+        if(const FObjectPropertyBase* Property=FindFProperty<FObjectPropertyBase>(Player->GetClass(),TEXT("Target")))
+            if(AActor* Selected=Cast<AActor>(Property->GetObjectPropertyValue_InContainer(Player)))
+                if(IsValid(Selected)&&Selected!=Player&&!Selected->IsActorBeingDestroyed()){CombatTarget=Selected;Target=Selected->GetActorLocation();}
+        if(bStress){Source=Target+PreviewOffset;Target=Source+Forward*300.f+FVector(0,0,100);}
+        else {Source+=PreviewOffset;Target+=PreviewOffset;}
+        Ground=bStress?Source:Target;
+        FHitResult Hit;FCollisionQueryParams Query(SCENE_QUERY_STAT(VFXShowcaseGround),false,Player);Query.AddIgnoredActor(this);
+        if(CombatTarget)Query.AddIgnoredActor(CombatTarget);
+        if(GetWorld()->LineTraceSingleByChannel(Hit,Ground+FVector(0,0,150),Ground-FVector(0,0,10000),ECC_Visibility,Query))
+        {Ground=Hit.ImpactPoint+Hit.ImpactNormal*.5f;GroundNormal=Hit.ImpactNormal;}
+    }
+    else
+    {
+        Source=Environment->GetOriginPoint()+Offset;Target=Environment->GetTargetPoint(PreviewDistance)+Offset;
+        if(bStress){Source=Environment->GetStressPoint()+Offset;Target=Source+FVector(300,0,100);}
+        Ground=bStress?Source:Environment->GetGroundPoint()+Offset;
+    }
     Request.Transform=FTransform(FRotator::ZeroRotator,Target);
     USceneComponent* Anchor=nullptr;
     switch(Preview.PreviewMode)
     {
-    case EVFXPreviewMode::Area:Request.Transform=FTransform(FRotator::ZeroRotator,bStress?Source:Environment->GetGroundPoint()+Offset);break;
-    case EVFXPreviewMode::Environment:Request.Transform=FTransform(FRotator::ZeroRotator,bStress?Source:Environment->GetEnvironmentPoint()+Offset);if(!bStress)Environment->FocusEnvironment();break;
+    case EVFXPreviewMode::Area:Request.Transform=FTransform(FRotationMatrix::MakeFromZ(GroundNormal).ToQuat(),Ground);break;
+    case EVFXPreviewMode::Environment:
+        Request.Transform=FTransform(FRotator::ZeroRotator,bUseExistingCombatWorld?Ground:bStress?Source:Environment->GetEnvironmentPoint()+Offset);
+        if(!bUseExistingCombatWorld&&!bStress)Environment->FocusEnvironment();break;
     case EVFXPreviewMode::Beam:Request.Transform=FTransform((Target-Source).Rotation(),Source);break;
     case EVFXPreviewMode::Screen:
-        Request.SpawnMode=EVFXSpawnMode::Attached;Request.AttachComponent=Environment->ScreenAnchor;Request.Transform=FTransform(FRotator::ZeroRotator,Offset*.02f,FVector(.2));break;
+        Request.SpawnMode=EVFXSpawnMode::Attached;Request.Transform=FTransform(FRotator::ZeroRotator,Offset*.02f,FVector(.2));
+        if(bUseExistingCombatWorld)
+        {
+            FVector ViewLocation;FRotator ViewRotation;PC->GetPlayerViewPoint(ViewLocation,ViewRotation);
+            Anchor=NewObject<USceneComponent>(this);Anchor->RegisterComponent();PreviewAnchors.Add(Anchor);CombatScreenAnchors.Add(Anchor);
+            Anchor->SetWorldLocationAndRotation(ViewLocation+ViewRotation.Vector()*180.f,ViewRotation);Request.AttachComponent=Anchor;
+        }
+        else Request.AttachComponent=Environment->ScreenAnchor;
+        break;
     case EVFXPreviewMode::Attached:
     case EVFXPreviewMode::Projectile:
         Anchor=NewObject<USceneComponent>(this);Anchor->RegisterComponent();Anchor->AttachToComponent(GetRootComponent(),FAttachmentTransformRules::KeepWorldTransform);PreviewAnchors.Add(Anchor);
-        if(Preview.PreviewMode==EVFXPreviewMode::Attached&&!bStress&&Environment->Character)
+        if(Preview.PreviewMode==EVFXPreviewMode::Attached&&!bStress&&bUseExistingCombatWorld)
+        {
+            const FName RequestedSocket=Entry->DefaultSocketName.IsNone()?(Entry->Category==EVFXCategory::Trail?FName(TEXT("weapon")):FName(TEXT("hand_r"))):Entry->DefaultSocketName;
+            USceneComponent* Attachment=Player->GetRootComponent();FName Socket=NAME_None;
+            if(USkeletalMeshComponent* Mesh=Player->FindComponentByClass<USkeletalMeshComponent>())
+            {
+                Attachment=Mesh;
+                if(Mesh->DoesSocketExist(RequestedSocket))Socket=RequestedSocket;
+            }
+            Anchor->AttachToComponent(Attachment,FAttachmentTransformRules::SnapToTargetNotIncludingScale,Socket);
+            Anchor->SetWorldLocation(Anchor->GetComponentLocation()+PreviewOffset);
+        }
+        else if(Preview.PreviewMode==EVFXPreviewMode::Attached&&!bStress&&Environment&&Environment->Character)
         {
             const FName Name=Entry->Category==EVFXCategory::Trail?FName(TEXT("weapon")):Entry->DefaultSocketName.IsNone()?FName(TEXT("hand_r")):Entry->DefaultSocketName;
             Anchor->AttachToComponent(Environment->Character->GetAnchor(Name),FAttachmentTransformRules::SnapToTargetNotIncludingScale);Anchor->SetRelativeLocation(Offset);
@@ -302,8 +395,8 @@ FVFXHandle AVFXShowcaseController::SpawnPreview(FGameplayTag Tag,const FVector& 
     if(bSurfaceTarget)
     {
         Request.SpawnMode=EVFXSpawnMode::AtLocation;Request.AttachComponent=nullptr;
-        Request.Transform=Environment->GetSurfaceTransform();
-        Request.Transform.AddToTranslation(Request.Transform.TransformVectorNoScale(FVector(Offset.X,Offset.Y,0)));
+        Request.Transform=bUseExistingCombatWorld?FTransform(FRotationMatrix::MakeFromZ(GroundNormal).ToQuat(),Ground):Environment->GetSurfaceTransform();
+        if(!bUseExistingCombatWorld)Request.Transform.AddToTranslation(Request.Transform.TransformVectorNoScale(FVector(Offset.X,Offset.Y,0)));
         Request.ParameterOverrides.VectorParameters.Add(TEXT("User.SurfaceNormal"),Request.Transform.GetUnitAxis(EAxis::Z));
         if(Anchor){PreviewAnchors.Remove(Anchor);Anchor->DestroyComponent();Anchor=nullptr;}
     }
@@ -355,31 +448,31 @@ void AVFXShowcaseController::SetQuality(EVFXShowcaseQuality NewQuality)
         }
     Replay();
 }
-void AVFXShowcaseController::SetBackground(EVFXShowcaseBackground NewBackground){Background=NewBackground;if(Environment)Environment->SetBackground(Background);OnChanged.Broadcast();}
-void AVFXShowcaseController::SetPlaybackSpeed(float Speed){PlaybackSpeed=FMath::Clamp(Speed,.1f,1.f);UGameplayStatics::SetGlobalTimeDilation(this,PlaybackSpeed);bChangedTimeDilation=true;OnChanged.Broadcast();}
-void AVFXShowcaseController::SetPreviewDistance(float DistanceCm){PreviewDistance=FMath::Clamp(DistanceCm,100.f,5000.f);if(Environment&&Environment->Target)Environment->Target->SetActorLocation(Environment->GetTargetPoint(PreviewDistance));Replay();}
-void AVFXShowcaseController::SetCameraDistance(float DistanceCm){if(Environment)Environment->SetCameraDistance(DistanceCm);}
-void AVFXShowcaseController::SetVRPreview(bool bEnabled){bVRPreview=bEnabled;if(bEnabled)SetQuality(EVFXShowcaseQuality::VRMobile);LastMessage=TEXT("已切换虚拟现实移动端预算预览；头显双眼显示与舒适度仍需实机验收。");OnChanged.Broadcast();}
-void AVFXShowcaseController::SetMotion(EVFXShowcaseMotion Motion){CurrentMotion=Motion;MotionElapsed=0;}
-void AVFXShowcaseController::SetSurface(FName Surface){if(Environment){Environment->SetSurface(Surface);Replay();}}
+void AVFXShowcaseController::SetBackground(EVFXShowcaseBackground NewBackground){if(RejectCombatWorldControl())return;Background=NewBackground;if(Environment)Environment->SetBackground(Background);OnChanged.Broadcast();}
+void AVFXShowcaseController::SetPlaybackSpeed(float Speed){if(RejectCombatWorldControl())return;PlaybackSpeed=FMath::Clamp(Speed,.1f,1.f);UGameplayStatics::SetGlobalTimeDilation(this,PlaybackSpeed);bChangedTimeDilation=true;OnChanged.Broadcast();}
+void AVFXShowcaseController::SetPreviewDistance(float DistanceCm){PreviewDistance=FMath::Clamp(DistanceCm,100.f,5000.f);if(!bUseExistingCombatWorld&&Environment&&Environment->Target)Environment->Target->SetActorLocation(Environment->GetTargetPoint(PreviewDistance));Replay();}
+void AVFXShowcaseController::SetCameraDistance(float DistanceCm){if(RejectCombatWorldControl())return;if(Environment)Environment->SetCameraDistance(DistanceCm);}
+void AVFXShowcaseController::SetVRPreview(bool bEnabled){if(RejectCombatWorldControl())return;bVRPreview=bEnabled;if(bEnabled)SetQuality(EVFXShowcaseQuality::VRMobile);LastMessage=TEXT("已切换虚拟现实移动端预算预览；头显双眼显示与舒适度仍需实机验收。");OnChanged.Broadcast();}
+void AVFXShowcaseController::SetMotion(EVFXShowcaseMotion Motion){if(RejectCombatWorldControl())return;CurrentMotion=Motion;MotionElapsed=0;}
+void AVFXShowcaseController::SetSurface(FName Surface){if(RejectCombatWorldControl())return;if(Environment){Environment->SetSurface(Surface);Replay();}}
 void AVFXShowcaseController::PlayStress(int32 Count)
 {
     bLoop=false;bAutoPreview=false;ClearPlayback(true);TestCount=ClampStressCount(Count);MotionElapsed=0;
     const int32 Columns=FMath::CeilToInt(FMath::Sqrt(float(TestCount)));
     const int32 Rows=FMath::DivideAndRoundUp(TestCount,Columns);
-    if(Environment)Environment->FrameStressGrid(Columns,Rows,300.f);
+    if(!bUseExistingCombatWorld&&Environment)Environment->FrameStressGrid(Columns,Rows,300.f);
     for(int32 I=0;I<TestCount;++I)SpawnPreview(SelectedTag,FVector(I%Columns*300,I/Columns*300,0),true);
     OnChanged.Broadcast();
 }
 void AVFXShowcaseController::PlayCompare(FGameplayTag OtherTag)
 {
     if(!FindRow(OtherTag))return;bLoop=false;bAutoPreview=false;ClearPlayback(true);CompareTag=OtherTag;TestCount=2;
-    if(Environment)Environment->FocusStress(false);
+    if(!bUseExistingCombatWorld&&Environment)Environment->FocusStress(false);
     SpawnPreview(SelectedTag,FVector(0,-300,0),false);SpawnPreview(OtherTag,FVector(0,300,0),false);OnChanged.Broadcast();
 }
 void AVFXShowcaseController::PlayCombatSimulation()
 {
-    bLoop=false;bAutoPreview=false;ClearPlayback(true);MotionElapsed=0;if(Environment)Environment->FocusStress(true);
+    bLoop=false;bAutoPreview=false;ClearPlayback(true);MotionElapsed=0;if(!bUseExistingCombatWorld&&Environment)Environment->FocusStress(true);
     for(EVFXCategory Category:{EVFXCategory::Projectile,EVFXCategory::Impact,EVFXCategory::Trail,EVFXCategory::Status,EVFXCategory::Area})
         if(const FVFXShowcaseEntry* Row=AllEntries.FindByPredicate([Category](const FVFXShowcaseEntry& E){return E.Category==Category;}))
         {SpawnPreview(Row->VFXTag,FVector((TestCount%3)*400,(TestCount/3)*400,0),true);++TestCount;}
@@ -393,6 +486,13 @@ void AVFXShowcaseController::Tick(float DeltaSeconds)
     Performance.ActiveNiagaraSystems=0;for(TObjectIterator<UNiagaraComponent> It;It;++It)if(It->GetWorld()==GetWorld()&&It->IsActive())++Performance.ActiveNiagaraSystems;
     Performance.CurrentTestCount=TestCount;Performance.Quality=Quality;
     MotionElapsed+=DeltaSeconds;SequenceElapsed+=DeltaSeconds;
+    if(bUseExistingCombatWorld)
+        if(APlayerController* PC=UGameplayStatics::GetPlayerController(this,0))
+        {
+            FVector Location;FRotator Rotation;PC->GetPlayerViewPoint(Location,Rotation);
+            for(const TWeakObjectPtr<USceneComponent>& Weak:CombatScreenAnchors)
+                if(USceneComponent* Screen=Weak.Get())Screen->SetWorldLocationAndRotation(Location+Rotation.Vector()*180.f,Rotation);
+        }
     for(auto& Pair:MovingAnchors)
         if(USceneComponent* Anchor=Pair.Value.Get())
         {
@@ -402,7 +502,7 @@ void AVFXShowcaseController::Tick(float DeltaSeconds)
             const FVector Target=AnchorTargetLocations.FindRef(Pair.Key);
             Anchor->SetWorldLocation(FMath::Lerp(Origin,Target,FMath::Clamp(Age/2.f,0.f,1.f)));
         }
-    if(Environment&&Environment->Character)
+    if(!bUseExistingCombatWorld&&Environment&&Environment->Character)
     {
         USceneComponent* Weapon=Environment->Character->GetAnchor(TEXT("weapon"));
         const float Phase=MotionElapsed*3;
@@ -597,6 +697,7 @@ void AVFXShowcaseController::StartSmokeTest()
         if(!Impact){LastMessage=TEXT("运行检查失败：目录中没有有效的命中特效。");CaptureSmokeStage(TEXT("MissingImpact"),false);return;}
         UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget);
         if(!Widget){LastMessage=TEXT("运行检查失败：展示界面未创建。");CaptureSmokeStage(TEXT("MissingWidget"),false);return;}
+        if(bUseExistingCombatWorld&&!bHUDInteractive)ToggleHUDInteraction();
         const FGameplayTag ImpactTag=Impact->VFXTag;
         Widget->ExecuteAction(TEXT("Category:Impact"));
         Widget->ExecuteAction(TEXT("Entry:")+ImpactTag.ToString());

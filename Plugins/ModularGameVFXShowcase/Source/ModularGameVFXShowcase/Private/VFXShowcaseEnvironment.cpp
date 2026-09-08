@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Engine/StaticMesh.h"
@@ -35,7 +36,7 @@ void AddLabel(AActor* Owner, FName Name, const FString& Text, FVector Location, 
     Label->SetWorldSize(45);
     Label->SetTextRenderColor(Color);
 }
-void CreateChineseHUDLabels(AActor* Owner)
+void CreateChineseHUDLabels(AActor* Owner,TArray<TObjectPtr<UWidgetComponent>>& Created)
 {
     // Runtime Slate font fallback supports Chinese; the engine's offline 3D font does not.
     // Keep existing serialized components and replace only their runtime presentation.
@@ -60,12 +61,14 @@ void CreateChineseHUDLabels(AActor* Owner)
         HUD->SetWidgetSpace(EWidgetSpace::Screen);
         HUD->SetDrawAtDesiredSize(true);
         HUD->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        HUD->SetVisibility(false);
         HUD->SetSlateWidget(SNew(STextBlock).Text(FText::FromString(*Caption))
             .Font(FCoreStyle::GetDefaultFontStyle(TEXT("Regular"),VFXShowcaseUI::FontSize))
             .ColorAndOpacity(FLinearColor(.65f,.91f,1.f))
             .ShadowColorAndOpacity(FLinearColor(0,0,0,.85f)).ShadowOffset(FVector2D(1,1))
             .Visibility(EVisibility::HitTestInvisible));
         HUD->RegisterComponent();
+        Created.Add(HUD);
     }
 }
 }
@@ -103,6 +106,8 @@ USceneComponent* AVFXTestCharacter::GetAnchor(FName Name) const
 }
 AVFXShowcaseEnvironment::AVFXShowcaseEnvironment()
 {
+    PrimaryActorTick.bCanEverTick=true;
+    PrimaryActorTick.TickGroup=TG_PostUpdateWork;
     SetRootComponent(CreateDefaultSubobject<USceneComponent>(TEXT("StageRoot")));
     Camera=CreateDefaultSubobject<UCameraComponent>(TEXT("PreviewCamera")); Camera->SetupAttachment(RootComponent);
     Camera->FieldOfView=65;
@@ -150,12 +155,39 @@ void AVFXShowcaseEnvironment::BeginPlay()
     Character=GetWorld()->SpawnActor<AVFXTestCharacter>(GetActorLocation()+FVector(0,-250,0),FRotator::ZeroRotator);
     for(AActor* Actor : {static_cast<AActor*>(Origin),static_cast<AActor*>(Target),static_cast<AActor*>(ProjectileTarget),static_cast<AActor*>(Character)})
         if(Actor){Actor->SetOwner(this); Actor->AttachToActor(this,FAttachmentTransformRules::KeepWorldTransform); SpawnedActors.Add(Actor);}
-    CreateChineseHUDLabels(this);
-    for(AActor* Actor:SpawnedActors)CreateChineseHUDLabels(Actor);
+    CreateChineseHUDLabels(this,HUDLabels);
+    for(AActor* Actor:SpawnedActors)if(IsValid(Actor))CreateChineseHUDLabels(Actor,HUDLabels);
     if(APlayerController* PC=UGameplayStatics::GetPlayerController(this,0)) PC->SetViewTarget(this);
+}
+void AVFXShowcaseEnvironment::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    APlayerController* PC=UGameplayStatics::GetPlayerController(this,0);
+    int32 Width=0,Height=0;if(PC)PC->GetViewportSize(Width,Height);
+    const float UIScale=FMath::Max(UWidgetLayoutLibrary::GetViewportScale(this),.01f);
+    // Sidebar widths are 310/350 Slate units. Reserve vertical space for the
+    // header, live metrics, selection footer and playback controls as well.
+    const FVector2D Min(334.f*UIScale,180.f*UIScale);
+    const FVector2D Max(Width-374.f*UIScale,Height-190.f*UIScale);
+    for(UWidgetComponent* Label:HUDLabels)
+    {
+        if(!IsValid(Label))continue;
+        FVector2D Position;
+        bool bShow=PC&&PC->ProjectWorldLocationToScreen(Label->GetComponentLocation(),Position,true);
+        FVector2D HalfSize(100.f*UIScale,12.f*UIScale);
+        if(Label->GetSlateWidget().IsValid())
+        {
+            Label->GetSlateWidget()->SlatePrepass();
+            HalfSize=FVector2D(Label->GetSlateWidget()->GetDesiredSize())*UIScale*.5f;
+        }
+        bShow=bShow&&Position.X-HalfSize.X>=Min.X&&Position.X+HalfSize.X<=Max.X
+            &&Position.Y-HalfSize.Y>=Min.Y&&Position.Y+HalfSize.Y<=Max.Y;
+        Label->SetVisibility(bShow);
+    }
 }
 void AVFXShowcaseEnvironment::EndPlay(const EEndPlayReason::Type Reason)
 {
+    HUDLabels.Reset();
     for(AActor* Actor:SpawnedActors)if(IsValid(Actor))Actor->Destroy();SpawnedActors.Reset();
     Super::EndPlay(Reason);
 }

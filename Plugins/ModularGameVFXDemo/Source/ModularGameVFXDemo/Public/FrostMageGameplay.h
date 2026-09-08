@@ -165,6 +165,7 @@ class MODULARGAMEVFXDEMO_API AFMPlayerController : public APlayerController {
 public:
  AFMPlayerController(); virtual void BeginPlay() override; virtual void SetupInputComponent() override; virtual void PlayerTick(float Delta) override;
  virtual void FlushPressedKeys() override;
+ UFUNCTION(BlueprintPure,Category="FrostMage|Input") bool IsDebugUIInteractive() const;
  UFUNCTION(Exec) void FMTestBolt(); UFUNCTION(Exec) void FMTestNova(); UFUNCTION(Exec) void FMTestSelect();
  UFUNCTION(Exec) void FMTestPetal();
  UFUNCTION(Exec) void FMTestHeal();
@@ -187,6 +188,7 @@ public:
  UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="WoW Mouse") bool bSmartCameraFollow=true;
  UPROPERTY(BlueprintReadOnly,Category="WoW Mouse") float ZoomGoal=690.f;
 private:
+ bool bWasDebugUIInteractive=false;
  void JumpStart(); void JumpStop(); void ZoomIn(); void ZoomOut(); void Cancel();
  void BeginOrbit(); void EndOrbit(); void SetCursorMode();
  void BeginLeftMouse(); void EndLeftMouse(); void RestoreCursor();

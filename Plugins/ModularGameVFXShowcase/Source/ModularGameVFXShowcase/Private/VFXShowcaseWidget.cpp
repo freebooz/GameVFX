@@ -20,6 +20,7 @@
 #include "Components/WrapBox.h"
 #include "Components/WrapBoxSlot.h"
 #include "EngineUtils.h"
+#include "InputCoreTypes.h"
 
 namespace
 {
@@ -74,6 +75,7 @@ namespace
         Border->SetBrushColor(PanelColor);
         Border->SetPadding(FMargin(10.f));
         Border->SetContent(Child);
+        Border->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
         return Border;
     }
 }
@@ -112,6 +114,8 @@ TSharedRef<SWidget> UVFXShowcasePanel::RebuildWidget()
 
 TSharedRef<SWidget> UVFXShowcaseWidget::RebuildWidget()
 {
+    if (!Controller && GetWorld())
+        for (TActorIterator<AVFXShowcaseController> It(GetWorld()); It; ++It) { Controller = *It; break; }
     if (!Categories) BuildWorkbench();
     return Super::RebuildWidget();
 }
@@ -251,10 +255,13 @@ void UVFXShowcaseWidget::NativeConstruct()
 void UVFXShowcaseWidget::BuildWorkbench()
 {
     bUpdating = true;
+    const bool bCombatWorld = IsValid(Controller) && Controller->bUseExistingCombatWorld;
     UVerticalBox* Root = WidgetTree->ConstructWidget<UVerticalBox>();
+    Root->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     WidgetTree->RootWidget = Root;
     UVerticalBox* Header = WidgetTree->ConstructWidget<UVerticalBox>();
-    Label(Header, TEXT("VFX SHOWCASE  /  Catalog & acceptance workbench"))->SetColorAndOpacity(Accent);
+    Label(Header, bCombatWorld ? TEXT("原怪物关卡 · 特效调试（按F1返回战斗）") : TEXT("VFX SHOWCASE  /  Catalog & acceptance workbench"))->SetColorAndOpacity(Accent);
+    if (bCombatWorld) ActionButton(Header, TEXT("返回战斗（F1）"), TEXT("ReturnCombat"));
     StatusText = Label(Header, TEXT("Choose a catalog entry to play through VFX Manager."));
     Root->AddChildToVerticalBox(Frame(WidgetTree, Header));
 
@@ -301,7 +308,9 @@ void UVFXShowcaseWidget::BuildWorkbench()
     UVerticalBox* StageFooter = WidgetTree->ConstructWidget<UVerticalBox>();
     SelectionText = Label(StageFooter, TEXT("No VFX selected"));
     CompareText = Label(StageFooter, TEXT("Compare A: —  |  B: —"));
-    Label(StageFooter, TEXT("Select an entry for Single mode. Stress uses its own test zone.\nUse the Camera distance controls to inspect near and far readability."));
+    Label(StageFooter, bCombatWorld
+        ? TEXT("在当前目标附近预览特效，怪物战斗继续。\n调试期间暂停玩家操作，按F1返回战斗。")
+        : TEXT("Select an entry for Single mode. Stress uses its own test zone.\nUse the Camera distance controls to inspect near and far readability."));
     Stage->AddChildToVerticalBox(Frame(WidgetTree, StageFooter));
 
     UVerticalBox* Details = WidgetTree->ConstructWidget<UVerticalBox>();
@@ -312,25 +321,34 @@ void UVFXShowcaseWidget::BuildWorkbench()
     Body->AddChildToHorizontalBox(DetailSize);
     Inspector = CreateWidget<UVFXShowcaseInspector>(this); Details->AddChildToVerticalBox(Inspector);
     Parameters = CreateWidget<UVFXShowcaseParameterPanel>(this); Details->AddChildToVerticalBox(Parameters);
-    Label(Details, TEXT("ENVIRONMENT"))->SetColorAndOpacity(Accent);
-    BackgroundChoice = Choice(Details, TEXT("Background"), {TEXT("Neutral"), TEXT("Bright"), TEXT("Dark"), TEXT("Complex")});
+    Label(Details, bCombatWorld ? TEXT("播放质量与预览距离") : TEXT("ENVIRONMENT"))->SetColorAndOpacity(Accent);
+    UVerticalBox* BackgroundControls = WidgetTree->ConstructWidget<UVerticalBox>();
+    Details->AddChildToVerticalBox(BackgroundControls);
+    BackgroundControls->SetVisibility(bCombatWorld ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
+    BackgroundChoice = Choice(BackgroundControls, TEXT("Background"), {TEXT("Neutral"), TEXT("Bright"), TEXT("Dark"), TEXT("Complex")});
     QualityChoice = Choice(Details, TEXT("Quality"), {TEXT("Cinematic"), TEXT("High"), TEXT("Medium"), TEXT("Low"), TEXT("VRMobile")});
     QualityChoice->SetSelectedOption(TEXT("High"));
-    SpeedChoice = Choice(Details, TEXT("Playback speed"), {TEXT("1.0x"), TEXT("0.5x"), TEXT("0.25x"), TEXT("0.1x")});
+    UVerticalBox* SpeedControls = WidgetTree->ConstructWidget<UVerticalBox>();
+    Details->AddChildToVerticalBox(SpeedControls);
+    SpeedControls->SetVisibility(bCombatWorld ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
+    SpeedChoice = Choice(SpeedControls, TEXT("Playback speed"), {TEXT("1.0x"), TEXT("0.5x"), TEXT("0.25x"), TEXT("0.1x")});
     for (UComboBoxString* Combo : {BackgroundChoice.Get(), QualityChoice.Get(), SpeedChoice.Get()})
         Combo->OnSelectionChanged.AddDynamic(this, &UVFXShowcaseWidget::EnvironmentChanged);
     Label(Details, TEXT("Preview / beam distance"));
     UWrapBox* Distances = WidgetTree->ConstructWidget<UWrapBox>(); Details->AddChildToVerticalBox(Distances);
     for (int32 Distance : {3, 5, 10, 20, 30, 50}) ActionButton(Distances, FString::Printf(TEXT("%d米"), Distance), FString::Printf(TEXT("Distance:%d"), Distance));
-    Label(Details, TEXT("Camera distance"));
-    UWrapBox* Cameras = WidgetTree->ConstructWidget<UWrapBox>(); Details->AddChildToVerticalBox(Cameras);
+    UVerticalBox* SceneTools = WidgetTree->ConstructWidget<UVerticalBox>();
+    Details->AddChildToVerticalBox(SceneTools);
+    SceneTools->SetVisibility(bCombatWorld ? ESlateVisibility::Collapsed : ESlateVisibility::SelfHitTestInvisible);
+    Label(SceneTools, TEXT("Camera distance"));
+    UWrapBox* Cameras = WidgetTree->ConstructWidget<UWrapBox>(); SceneTools->AddChildToVerticalBox(Cameras);
     ActionButton(Cameras, TEXT("Near 3m"), TEXT("Camera:3"));
     ActionButton(Cameras, TEXT("Medium 10m"), TEXT("Camera:10"));
     ActionButton(Cameras, TEXT("Far 40m"), TEXT("Camera:40"));
-    ActionButton(Details, TEXT("VR preview / VRMobile quality"), TEXT("VR"));
-    UWrapBox* Motion = WidgetTree->ConstructWidget<UWrapBox>(); Details->AddChildToVerticalBox(Motion);
+    ActionButton(SceneTools, TEXT("VR preview / VRMobile quality"), TEXT("VR"));
+    UWrapBox* Motion = WidgetTree->ConstructWidget<UWrapBox>(); SceneTools->AddChildToVerticalBox(Motion);
     for (const FString& Name : {TEXT("Horizontal"), TEXT("Vertical"), TEXT("Spin"), TEXT("Dash"), TEXT("Jump"), TEXT("Land")}) ActionButton(Motion, Name, TEXT("Motion:") + Name);
-    UWrapBox* Surfaces = WidgetTree->ConstructWidget<UWrapBox>(); Details->AddChildToVerticalBox(Surfaces);
+    UWrapBox* Surfaces = WidgetTree->ConstructWidget<UWrapBox>(); SceneTools->AddChildToVerticalBox(Surfaces);
     for (const FString& Name : {TEXT("Stone"), TEXT("Metal"), TEXT("Wood"), TEXT("Ground"), TEXT("Wall")}) ActionButton(Surfaces, Name, TEXT("Surface:") + Name);
 
     Review = CreateWidget<UVFXShowcaseReviewPanel>(this); Details->AddChildToVerticalBox(Review);
@@ -583,9 +601,9 @@ void UVFXShowcaseWidget::EnvironmentChanged(FString Selection, ESelectInfo::Type
     const EVFXShowcaseBackground Background = EnumValue<EVFXShowcaseBackground>(BackgroundChoice->GetSelectedOption());
     const EVFXShowcaseQuality Quality = EnumValue<EVFXShowcaseQuality>(QualityChoice->GetSelectedOption());
     const float Speed = FCString::Atof(*SpeedChoice->GetSelectedOption());
-    if (Controller->Background != Background) Controller->SetBackground(Background);
+    if (!Controller->bUseExistingCombatWorld && Controller->Background != Background) Controller->SetBackground(Background);
     if (Controller->Quality != Quality) Controller->SetQuality(Quality);
-    if (!FMath::IsNearlyEqual(Controller->PlaybackSpeed, Speed)) Controller->SetPlaybackSpeed(Speed);
+    if (!Controller->bUseExistingCombatWorld && !FMath::IsNearlyEqual(Controller->PlaybackSpeed, Speed)) Controller->SetPlaybackSpeed(Speed);
 }
 
 bool UVFXShowcaseWidget::SaveReview()
@@ -630,6 +648,13 @@ bool UVFXShowcaseWidget::SaveReview()
 void UVFXShowcaseWidget::ExecuteAction(const FString& Action)
 {
     if (!Controller) return;
+    if (Action == TEXT("ReturnCombat"))
+    {
+        if (Controller->bUseExistingCombatWorld && Controller->bHUDInteractive) Controller->ToggleHUDInteraction();
+        return;
+    }
+    // Hidden standalone tools must also remain inert when invoked programmatically in the combat map.
+    if (Controller->bUseExistingCombatWorld && (Action.StartsWith(TEXT("Camera:")) || Action.StartsWith(TEXT("Motion:")) || Action.StartsWith(TEXT("Surface:")) || Action == TEXT("VR"))) return;
     FString Kind, Value;
     if (Action.Split(TEXT(":"), &Kind, &Value))
     {
@@ -698,4 +723,15 @@ void UVFXShowcaseWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
     if (CachedTag != Controller->SelectedTag) { RefreshSelection(); RebuildEntries(); }
     const double Now = FPlatformTime::Seconds();
     if (Now - LastTelemetryTime >= .25) { LastTelemetryTime = Now; UpdateTelemetry(); }
+}
+
+FReply UVFXShowcaseWidget::NativeOnPreviewKeyDown(const FGeometry& Geometry, const FKeyEvent& KeyEvent)
+{
+    // Handle F1 before an active search/reviewer/notes field so the player can always return to combat.
+    if (Controller && Controller->bUseExistingCombatWorld && Controller->bHUDInteractive && KeyEvent.GetKey() == EKeys::F1)
+    {
+        Controller->ToggleHUDInteraction();
+        return FReply::Handled();
+    }
+    return Super::NativeOnPreviewKeyDown(Geometry, KeyEvent);
 }

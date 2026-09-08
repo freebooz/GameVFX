@@ -7,6 +7,7 @@ class UCameraComponent;
 class UDirectionalLightComponent;
 class UStaticMeshComponent;
 class UTextRenderComponent;
+class UWidgetComponent;
 
 /** A portable procedural proxy, with named attachment components rather than project skeletal assets. */
 UCLASS(Blueprintable)
@@ -41,6 +42,7 @@ class MODULARGAMEVFXSHOWCASE_API AVFXShowcaseEnvironment : public AActor
     GENERATED_BODY()
 public:
     AVFXShowcaseEnvironment();
+    virtual void Tick(float DeltaSeconds) override;
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Showcase") TObjectPtr<UCameraComponent> Camera;
@@ -68,6 +70,7 @@ private:
     UPROPERTY() TObjectPtr<UStaticMeshComponent> SurfaceWall;
     UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> ComplexMeshes;
     UPROPERTY() TArray<TObjectPtr<AActor>> SpawnedActors;
+    UPROPERTY(Transient) TArray<TObjectPtr<UWidgetComponent>> HUDLabels;
     bool bStressCamera = false;
     bool bEnvironmentCamera = false;
     float CameraDistance = 1600;

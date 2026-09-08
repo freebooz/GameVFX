@@ -19,6 +19,10 @@ public:
     virtual void Tick(float DeltaSeconds) override;
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+    /** Reuse the host combat world, pawn and camera without spawning a showcase stage. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Showcase") bool bUseExistingCombatWorld = false;
+    UPROPERTY(BlueprintReadOnly, Category="Showcase") bool bHUDInteractive = false;
+    UFUNCTION(BlueprintCallable, Category="Showcase") void ToggleHUDInteraction();
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Showcase") TSoftObjectPtr<UVFXCatalog> Catalog;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Showcase") TObjectPtr<UVFXShowcaseProfile> Profile;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Showcase") TObjectPtr<AVFXShowcaseEnvironment> Environment;
@@ -83,6 +87,7 @@ private:
     UPROPERTY(Transient) TArray<FGameplayTag> RecentTags;
     UPROPERTY(Transient) TArray<FVFXHandle> Handles;
     UPROPERTY(Transient) TArray<TObjectPtr<USceneComponent>> PreviewAnchors;
+    TArray<TWeakObjectPtr<USceneComponent>> CombatScreenAnchors;
     FVFXShowcasePerformance Performance;
     double LastTickTime = 0;
     float SequenceElapsed = 0;
@@ -104,6 +109,8 @@ private:
     void CaptureSmokeStage(const FString& Stage, bool bScreenshot);
     FVFXHandle SpawnPreview(FGameplayTag Tag, const FVector& Offset, bool bStress);
     void ClearPlayback(bool bImmediate);
+    void ApplyHUDInteraction();
+    bool RejectCombatWorldControl();
     void Advance(int32 Direction);
     void UpdateReviewRows();
     FVFXShowcaseReview* FindOrAddReview(FGameplayTag Tag);

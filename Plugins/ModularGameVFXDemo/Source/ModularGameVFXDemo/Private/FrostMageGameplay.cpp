@@ -24,16 +24,38 @@
 #include "InputKeyEventArgs.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Misc/ConfigCacheIni.h"
+#include "Misc/Paths.h"
+#include "CanvasItem.h"
+#include "Fonts/SlateFontInfo.h"
 
 namespace FM {
 template<class T> T* Asset(const TCHAR* Path) { ConstructorHelpers::FObjectFinder<T> F(Path); return F.Object; }
 FVector Feet(const ACharacter* C) { return C->GetActorLocation()-FVector(0,0,C->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()); }
 int32 ActionAtCursor(APlayerController* PC){
+ if(PC->ActorHasTag(TEXT("VFXShowcaseUIInteractive")))return INDEX_NONE;
  int32 W=0,H=0;float MX=0,MY=0;PC->GetViewportSize(W,H);if(!PC->GetMousePosition(MX,MY))return INDEX_NONE;
  const int Cols=W<1280?4:8,Rows=Cols==4?2:1;const float CardW=FMath::Min(170.f,(W-64-(Cols-1)*8.f)/Cols),BarW=Cols*CardW+(Cols-1)*8;
  const float X=(W-BarW)/2,Y=H-102-(Rows-1)*72;
  for(int32 I=0;I<8;I++){const float SX=X+(I%Cols)*(CardW+8),SY=Y+(I/Cols)*72;if(MX>=SX&&MX<=SX+CardW&&MY>=SY&&MY<=SY+62)return I;}
  return INDEX_NONE;
+}
+FString ChineseStatus(FString Text){
+ const TPair<const TCHAR*,const TCHAR*> Translations[]={
+  {TEXT("1-4 Frost / Bloom  |  5 Fireball  |  6 Fire Blast  |  7 Flamestrike  |  8 Arcane"),TEXT("1—4 冰霜与花瓣　5 火球　6 火焰冲击　7 烈焰风暴　8 奥术飞弹")},
+  {TEXT("Select a living target with Tab"),TEXT("请按 Tab 选择存活目标")},{TEXT("Select a living target"),TEXT("请选择存活目标")},
+  {TEXT("Ground target is out of range (24m)"),TEXT("地面目标超出24米范围")},{TEXT("Target is out of range (24m)"),TEXT("目标超出24米范围")},
+  {TEXT("Target is out of sight"),TEXT("目标被遮挡")},{TEXT("Fireball target lost or obstructed"),TEXT("火球目标丢失或被遮挡")},
+  {TEXT("Arcane channel interrupted: target lost"),TEXT("奥术引导中断：目标丢失")},{TEXT("Cast interrupted"),TEXT("施法已中断")},{TEXT("Target lost"),TEXT("目标丢失")},
+  {TEXT("Frostbolt released"),TEXT("寒冰箭已释放")},{TEXT("Frost Nova: "),TEXT("冰霜新星：")},{TEXT(" target(s) frozen for 5s"),TEXT(" 个目标冻结5秒")},
+  {TEXT("Enemy Frostbolt  -"),TEXT("敌方寒冰箭：生命减少 ")},{TEXT(" HP  /  Chilled"),TEXT("，受到冰冷减速")},
+  {TEXT("Rose Petal Bloom  /  6 seconds"),TEXT("绯樱花瓣：持续6秒")},{TEXT("Healing Bloom  /  +12 HP per second  /  Move freely"),TEXT("翡翠治疗：每秒恢复12生命，可自由移动")},
+  {TEXT("Auto attack  /  6 damage"),TEXT("自动攻击：6点伤害")},{TEXT("Recovered at the test spawn"),TEXT("已在出生点恢复")},
+  {TEXT("Fire Blast  /  Instant  /  22 damage"),TEXT("火焰冲击：瞬发，22点伤害")},{TEXT("Fireball  /  30 damage"),TEXT("火球术：30点伤害")},
+  {TEXT("Flamestrike  /  3m radius  /  28 + burn 32"),TEXT("烈焰风暴：半径3米，28点伤害与32点灼烧")},
+  {TEXT("Arcane Missiles  /  5 bolts  /  45 damage"),TEXT("奥术飞弹：5枚飞弹，共45点伤害")}
+ };
+ for(const auto& Pair:Translations)Text.ReplaceInline(Pair.Key,Pair.Value,ESearchCase::CaseSensitive);
+ return Text;
 }
 }
 
@@ -302,6 +324,7 @@ void AFMFrostMage::Tick(float D){Super::Tick(D);NovaCooldown=FMath::Max(0.f,Nova
 }
 
 AFMPlayerController::AFMPlayerController(){bShowMouseCursor=true;DefaultMouseCursor=EMouseCursor::Default;}
+bool AFMPlayerController::IsDebugUIInteractive() const{return ActorHasTag(TEXT("VFXShowcaseUIInteractive"));}
 void AFMPlayerController::SetCursorMode(){FInputModeGameAndUI Mode;Mode.SetHideCursorDuringCapture(false);Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);SetInputMode(Mode);bShowMouseCursor=true;}
 void AFMPlayerController::BeginPlay(){Super::BeginPlay();SetCursorMode();SetControlRotation(FRotator(-20,0,0));
  const TCHAR* Section=TEXT("FrostMage.Mouse");
@@ -312,18 +335,35 @@ void AFMPlayerController::BeginPlay(){Super::BeginPlay();SetCursorMode();SetCont
  UE_LOG(LogTemp,Display,TEXT("FM_MOUSE_PROFILE Yaw=%.1f Pitch=%.1f RawScale=%.3f Multiplier=%.2f"),CameraYawMoveSpeed,CameraPitchMoveSpeed,RawDegreesPerCount,MouseSensitivityMultiplier);
 }
 void AFMPlayerController::SetupInputComponent(){Super::SetupInputComponent();
- InputComponent->BindKey(EKeys::One,IE_Pressed,this,&AFMPlayerController::FMTestBolt);InputComponent->BindKey(EKeys::Two,IE_Pressed,this,&AFMPlayerController::FMTestNova);InputComponent->BindKey(EKeys::Three,IE_Pressed,this,&AFMPlayerController::FMTestPetal);InputComponent->BindKey(EKeys::Tab,IE_Pressed,this,&AFMPlayerController::FMTestSelect);
- InputComponent->BindKey(EKeys::Eight,IE_Pressed,this,&AFMPlayerController::FMTestArcane);
- InputComponent->BindKey(EKeys::Four,IE_Pressed,this,&AFMPlayerController::FMTestHeal);
- InputComponent->BindKey(EKeys::Five,IE_Pressed,this,&AFMPlayerController::FMTestFireball);InputComponent->BindKey(EKeys::Six,IE_Pressed,this,&AFMPlayerController::FMTestFireBlast);InputComponent->BindKey(EKeys::Seven,IE_Pressed,this,&AFMPlayerController::FMTestFlamestrike);
- InputComponent->BindKey(EKeys::LeftMouseButton,IE_Pressed,this,&AFMPlayerController::BeginLeftMouse);InputComponent->BindKey(EKeys::LeftMouseButton,IE_Released,this,&AFMPlayerController::EndLeftMouse);
- InputComponent->BindKey(EKeys::RightMouseButton,IE_Pressed,this,&AFMPlayerController::BeginOrbit);InputComponent->BindKey(EKeys::RightMouseButton,IE_Released,this,&AFMPlayerController::EndOrbit);
- InputComponent->BindKey(EKeys::SpaceBar,IE_Pressed,this,&AFMPlayerController::JumpStart);InputComponent->BindKey(EKeys::SpaceBar,IE_Released,this,&AFMPlayerController::JumpStop);
- InputComponent->BindKey(EKeys::MouseScrollUp,IE_Pressed,this,&AFMPlayerController::ZoomIn);InputComponent->BindKey(EKeys::MouseScrollDown,IE_Pressed,this,&AFMPlayerController::ZoomOut);InputComponent->BindKey(EKeys::Escape,IE_Pressed,this,&AFMPlayerController::Cancel);
- InputComponent->BindKey(EKeys::NumLock,IE_Pressed,this,&AFMPlayerController::ToggleAutoRun);InputComponent->BindKey(EKeys::Divide,IE_Pressed,this,&AFMPlayerController::ToggleWalk);
- InputComponent->BindKey(FInputChord(EKeys::Tab,true,false,false,false),IE_Pressed,this,&AFMPlayerController::FMTestSelect);
+ // Gate this controller's combat bindings only; F1 on the Showcase actor still runs.
+ auto BindCombat=[this](FInputChord Chord,EInputEvent Event,void(AFMPlayerController::*Action)()){
+  FInputKeyBinding Binding(Chord,Event);
+  Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this,[this,Action](){if(!IsDebugUIInteractive())(this->*Action)();});
+  InputComponent->KeyBindings.Add(MoveTemp(Binding));
+ };
+ BindCombat(EKeys::One,IE_Pressed,&AFMPlayerController::FMTestBolt);BindCombat(EKeys::Two,IE_Pressed,&AFMPlayerController::FMTestNova);BindCombat(EKeys::Three,IE_Pressed,&AFMPlayerController::FMTestPetal);BindCombat(EKeys::Tab,IE_Pressed,&AFMPlayerController::FMTestSelect);
+ BindCombat(EKeys::Eight,IE_Pressed,&AFMPlayerController::FMTestArcane);
+ BindCombat(EKeys::Four,IE_Pressed,&AFMPlayerController::FMTestHeal);
+ BindCombat(EKeys::Five,IE_Pressed,&AFMPlayerController::FMTestFireball);BindCombat(EKeys::Six,IE_Pressed,&AFMPlayerController::FMTestFireBlast);BindCombat(EKeys::Seven,IE_Pressed,&AFMPlayerController::FMTestFlamestrike);
+ BindCombat(EKeys::LeftMouseButton,IE_Pressed,&AFMPlayerController::BeginLeftMouse);BindCombat(EKeys::LeftMouseButton,IE_Released,&AFMPlayerController::EndLeftMouse);
+ BindCombat(EKeys::RightMouseButton,IE_Pressed,&AFMPlayerController::BeginOrbit);BindCombat(EKeys::RightMouseButton,IE_Released,&AFMPlayerController::EndOrbit);
+ BindCombat(EKeys::SpaceBar,IE_Pressed,&AFMPlayerController::JumpStart);BindCombat(EKeys::SpaceBar,IE_Released,&AFMPlayerController::JumpStop);
+ BindCombat(EKeys::MouseScrollUp,IE_Pressed,&AFMPlayerController::ZoomIn);BindCombat(EKeys::MouseScrollDown,IE_Pressed,&AFMPlayerController::ZoomOut);BindCombat(EKeys::Escape,IE_Pressed,&AFMPlayerController::Cancel);
+ BindCombat(EKeys::NumLock,IE_Pressed,&AFMPlayerController::ToggleAutoRun);BindCombat(EKeys::Divide,IE_Pressed,&AFMPlayerController::ToggleWalk);
+ BindCombat(FInputChord(EKeys::Tab,true,false,false,false),IE_Pressed,&AFMPlayerController::FMTestSelect);
 }
 void AFMPlayerController::PlayerTick(float D){Super::PlayerTick(D);auto* P=Cast<AFMFrostMage>(GetPawn());if(!P)return;
+ const bool bDebugInteractive=IsDebugUIInteractive();
+ if(bDebugInteractive||bWasDebugUIInteractive){
+  // Do not call our FlushPressedKeys override here: it resets input mode and would
+  // steal focus from the debug search field. Only clear game key/held-button state.
+  if(bDebugInteractive!=bWasDebugUIInteractive)Super::FlushPressedKeys();
+  bWasDebugUIInteractive=bDebugInteractive;
+  bLeftMouseHeld=bRightMouseHeld=bOrbiting=bAutoRun=false;
+  bLeftMouseDragged=bRightMouseDragged=false;LeftMouseTravel=RightMouseTravel=0;
+  P->SetMovementIntent(0,0);P->GetCharacterMovement()->StopMovementImmediately();P->bAutoAttacking=false;
+  if(bDebugInteractive)return;
+ }
  if(bOrbiting){float X=0,Y=0;GetInputMouseDelta(X,Y);
   if(bSkipFirstOrbitDelta){X=Y=0;bSkipFirstOrbitDelta=false;}
   if(bLeftMouseHeld){LeftMouseTravel+=FMath::Abs(X)+FMath::Abs(Y);bLeftMouseDragged|=LeftMouseTravel>4.f;}
@@ -346,6 +386,7 @@ void AFMPlayerController::PlayerTick(float D){Super::PlayerTick(D);auto* P=Cast<
 void AFMPlayerController::FlushPressedKeys(){Super::FlushPressedKeys();bLeftMouseHeld=bRightMouseHeld=bOrbiting=bAutoRun=false;bLeftMouseDragged=bRightMouseDragged=false;LeftMouseTravel=RightMouseTravel=0;bShowMouseCursor=true;SetCursorMode();}
 void AFMPlayerController::FMTestBolt(){if(auto* P=Cast<AFMFrostMage>(GetPawn()))P->CastFrostbolt();}
 void AFMPlayerController::SelectUnderCursor(){
+ if(IsDebugUIInteractive())return;
  if(bOrbiting)return;auto* P=Cast<AFMFrostMage>(GetPawn());if(!P)return;
  FHitResult Hit;GetHitResultUnderCursor(ECC_Visibility,false,Hit);auto* Monster=Cast<AFMFrostMonster>(Hit.GetActor());
  if(IsValid(P->Target))P->Target->bSelected=false;
