@@ -513,6 +513,8 @@ void AVFXShowcaseController::CaptureSmokeStage(const FString& Stage,bool bScreen
     Root->SetStringField(TEXT("stage"),Stage);Root->SetStringField(TEXT("timestampUtc"),FDateTime::UtcNow().ToIso8601());
     Root->SetStringField(TEXT("tag"),SelectedTag.ToString());Root->SetStringField(TEXT("message"),LastMessage);
     Root->SetBoolField(TEXT("screenshotRequested"),bScreenshot);
+    Root->SetBoolField(TEXT("widgetPresent"),IsValid(LiveWidget));
+    Root->SetBoolField(TEXT("entryDispatchedThroughWidget"),bSmokeImpactSelected);
     Root->SetStringField(TEXT("screenshotPath"),bScreenshot?Screenshot:TEXT(""));
     Root->SetStringField(TEXT("visualReview"),TEXT("NotTested"));Root->SetStringField(TEXT("gpuProfile"),TEXT("NotRun"));
     TSharedRef<FJsonObject> Telemetry=MakeShared<FJsonObject>();
@@ -539,7 +541,12 @@ void AVFXShowcaseController::StartSmokeTest()
         const FVFXShowcaseEntry* Impact=AllEntries.FindByPredicate([](const FVFXShowcaseEntry& Row)
             {return Row.Category==EVFXCategory::Impact&&Row.VFXTag.IsValid()&&Row.ValidationIssues.IsEmpty();});
         if(!Impact){LastMessage=TEXT("Smoke test failed: no valid Impact catalog entry.");CaptureSmokeStage(TEXT("MissingImpact"),false);return;}
-        bSmokeImpactSelected=SelectEntry(Impact->VFXTag,false);SetQuality(EVFXShowcaseQuality::High);
+        UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget);
+        if(!Widget){LastMessage=TEXT("Smoke test failed: Showcase UI is missing.");CaptureSmokeStage(TEXT("MissingWidget"),false);return;}
+        const FGameplayTag ImpactTag=Impact->VFXTag;
+        Widget->ExecuteAction(TEXT("Category:Impact"));
+        Widget->ExecuteAction(TEXT("Entry:")+ImpactTag.ToString());
+        bSmokeImpactSelected=SelectedTag==ImpactTag;SetQuality(EVFXShowcaseQuality::High);
         ScheduleSmokeAction(.15f,[this](){CaptureSmokeStage(TEXT("High"),true);});
     });
     ScheduleSmokeAction(10.f,[this]()
@@ -551,10 +558,11 @@ void AVFXShowcaseController::StartSmokeTest()
     ScheduleSmokeAction(15.f,[this]()
     {
         if(!bSmokeImpactSelected)return;
-        SetQuality(EVFXShowcaseQuality::High);PlayStress(10);
+        SetQuality(EVFXShowcaseQuality::High);
+        if(UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget))Widget->ExecuteAction(TEXT("Stress:10"));
         ScheduleSmokeAction(.15f,[this](){CaptureSmokeStage(TEXT("Stress10"),true);});
     });
-    ScheduleSmokeAction(20.f,[this](){Stop(true);CaptureSmokeStage(TEXT("Stopped"),false);});
+    ScheduleSmokeAction(20.f,[this](){if(UVFXShowcaseWidget* Widget=Cast<UVFXShowcaseWidget>(LiveWidget))Widget->ExecuteAction(TEXT("Stop Immediate"));else Stop(true);CaptureSmokeStage(TEXT("Stopped"),false);});
     ScheduleSmokeAction(22.f,[this](){CaptureSmokeStage(TEXT("Exit"),false);FPlatformMisc::RequestExit(false);});
 }
 void AVFXShowcaseController::ToggleFavorite()
