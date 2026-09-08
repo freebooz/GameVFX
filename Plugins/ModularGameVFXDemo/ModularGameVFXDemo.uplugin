@@ -1,0 +1,53 @@
+{
+  "FileVersion": 3,
+  "Version": 10000,
+  "VersionName": "1.0.0",
+  "FriendlyName": "ModularGameVFX Demo",
+  "Description": "Optional third-person spell demonstration, AI target, and 演示关卡 for ModularGameVFX.",
+  "Category": "Visual Effects",
+  "CreatedBy": "ModularGameVFX Team",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "IsBetaVersion": false,
+  "Installed": false,
+  "SupportedTargetPlatforms": [
+    "Win64"
+  ],
+  "Modules": [
+    {
+      "Name": "ModularGameVFXDemo",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "ModularGameVFX",
+      "Enabled": true
+    },
+    {
+      "Name": "Niagara",
+      "Enabled": true
+    },
+    {
+      "Name": "ControlRig",
+      "Enabled": true
+    },
+    {
+      "Name": "ControlRigSpline",
+      "Enabled": true
+    },
+    {
+      "Name": "FullBodyIK",
+      "Enabled": true
+    },
+    {
+      "Name": "AnimationData",
+      "Enabled": true
+    },
+    {
+      "Name": "EnhancedInput",
+      "Enabled": true
+    }
+  ]
+}

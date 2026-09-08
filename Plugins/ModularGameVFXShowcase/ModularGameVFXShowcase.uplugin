@@ -1,0 +1,12 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "Modular Game VFX Showcase",
+  "Description": "Independent catalog browser, Manager preview stage and evidence-based human review.",
+  "Category": "Development",
+  "CanContainContent": true,
+  "EnabledByDefault": false,
+  "Modules": [{"Name": "ModularGameVFXShowcase", "Type": "Runtime", "LoadingPhase": "Default"}],
+  "Plugins": [{"Name": "ModularGameVFX", "Enabled": true}, {"Name": "Niagara", "Enabled": true}]
+}

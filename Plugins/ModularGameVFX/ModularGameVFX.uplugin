@@ -1,0 +1,33 @@
+{
+  "FileVersion": 3,
+  "Version": 10000,
+  "VersionName": "1.0.0",
+  "FriendlyName": "ModularGameVFX",
+  "Description": "Cross-project GameplayTag-driven Niagara catalog, asynchronous VFX runtime, and reusable production VFX assets.",
+  "Category": "Visual Effects",
+  "CreatedBy": "ModularGameVFX Team",
+  "CanContainContent": true,
+  "IsBetaVersion": false,
+  "Installed": false,
+  "EnabledByDefault": true,
+  "Modules": [
+    {
+      "Name": "ModularGameVFX",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "Niagara",
+      "Enabled": true
+    },
+    {
+      "Name": "Interchange",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    }
+  ]
+}

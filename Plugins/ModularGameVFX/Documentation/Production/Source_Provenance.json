@@ -1,0 +1,24 @@
+{
+  "format_version": "1.0",
+  "copied_date": "2026-09-08",
+  "sources": [
+    {
+      "source_attachment": "C:\\Users\\Freebooz\\.codex\\attachments\\b369aa81-0274-447d-9f60-f604fd2c8730\\pasted-text.txt",
+      "document": "../ModularGameVFX_Single_VFX_Workflow.md",
+      "sha256": "161ccbd8748258565a33aea245281d3df4ffcec582dd549518a9f739537bf60f",
+      "bytes": 12641,
+      "byte_identical": true,
+      "source_text_edited": false
+    },
+    {
+      "source_attachment": "C:\\Users\\Freebooz\\.codex\\attachments\\d4ac408a-ff2e-4707-96a3-e973f5db4edc\\pasted-text.txt",
+      "document": "../ModularGameVFX_Batch_Production_Acceptance.md",
+      "sha256": "8ff6443f92d9f7606a95c7a6abf682b86c0fc24b39859eaefe930699c19e643c",
+      "bytes": 15366,
+      "byte_identical": true,
+      "source_text_edited": false
+    }
+  ],
+  "interpretation_entry": "README.md",
+  "note": "Original source documents remain unchanged; scope and current-project applicability are stated in the entry document."
+}

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "monolith": {
+      "command": "F:/UnrealEngine-5.8.0-release/Engine/Plugins/Marketplace/Monolith/Binaries/monolith_proxy.exe",
+      "args": []
+    }
+  }
+}

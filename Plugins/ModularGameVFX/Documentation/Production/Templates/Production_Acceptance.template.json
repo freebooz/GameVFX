@@ -1,0 +1,395 @@
+{
+  "template_version": "1.0",
+  "record_type": "ProductionAcceptance",
+  "record_id": null,
+  "intake_record": null,
+  "asset_soft_object_path": null,
+  "gameplay_tag": null,
+  "asset_revision": null,
+  "pack_version": null,
+  "quality_state": "Prototype",
+  "state_values": [
+    "Prototype",
+    "Review",
+    "Optimized",
+    "ProductionReady",
+    "Deprecated"
+  ],
+  "gate_status_values": [
+    "NotAssessed",
+    "Approved",
+    "Failed"
+  ],
+  "production_ready_rule": "All six gates must be Approved with real evidence, reviewer/tool, time and tested asset revision. Performance requires target-device profile evidence. A score, compile success or configured Effect Type alone does not pass these gates.",
+  "gates": {
+    "Visual": {
+      "status": "NotAssessed",
+      "evidence_refs": [],
+      "reviewer_or_tool": null,
+      "reviewed_at": null,
+      "asset_revision": null,
+      "notes": null
+    },
+    "Gameplay": {
+      "status": "NotAssessed",
+      "evidence_refs": [],
+      "reviewer_or_tool": null,
+      "reviewed_at": null,
+      "asset_revision": null,
+      "notes": null
+    },
+    "Performance": {
+      "status": "NotAssessed",
+      "evidence_refs": [],
+      "reviewer_or_tool": null,
+      "reviewed_at": null,
+      "asset_revision": null,
+      "notes": null
+    },
+    "Naming": {
+      "status": "NotAssessed",
+      "evidence_refs": [],
+      "reviewer_or_tool": null,
+      "reviewed_at": null,
+      "asset_revision": null,
+      "notes": null
+    },
+    "Catalog": {
+      "status": "NotAssessed",
+      "evidence_refs": [],
+      "reviewer_or_tool": null,
+      "reviewed_at": null,
+      "asset_revision": null,
+      "notes": null
+    },
+    "Dependency": {
+      "status": "NotAssessed",
+      "evidence_refs": [],
+      "reviewer_or_tool": null,
+      "reviewed_at": null,
+      "asset_revision": null,
+      "notes": null
+    }
+  },
+  "visual_scoring": {
+    "maximum_total": 100,
+    "weights": {
+      "visual_center": 15,
+      "impact_power": 15,
+      "spatial_layers": 10,
+      "timing": 10,
+      "element_identity": 10,
+      "gameplay_readability": 15,
+      "asset_reuse": 10,
+      "performance_design": 10,
+      "naming_conventions": 5
+    },
+    "assessments": {
+      "visual_center": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      },
+      "impact_power": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      },
+      "spatial_layers": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      },
+      "timing": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      },
+      "element_identity": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      },
+      "gameplay_readability": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      },
+      "asset_reuse": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      },
+      "performance_design": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      },
+      "naming_conventions": {
+        "score": null,
+        "evidence_refs": [],
+        "reviewer": null
+      }
+    },
+    "total_score": null,
+    "band": null,
+    "score_status": "Unassessed"
+  },
+  "technical_checks": {
+    "niagara_compile": {
+      "status": "NotRun",
+      "error_count": null,
+      "warning_count": null,
+      "evidence_refs": []
+    },
+    "manager_call": {
+      "status": "NotRun",
+      "evidence_refs": []
+    },
+    "pooling": {
+      "status": "NotRun",
+      "evidence_refs": []
+    },
+    "scalability": {
+      "High": "NotRun",
+      "Medium": "NotRun",
+      "Low": "NotRun",
+      "VRMobile": "NotRun",
+      "Cinematic": "NotRun"
+    },
+    "duplicates": {
+      "status": "NotRun",
+      "evidence_refs": []
+    },
+    "dependencies": {
+      "status": "NotRun",
+      "evidence_refs": []
+    }
+  },
+  "profile": {
+    "status": "NotRun",
+    "required_label_until_measured": "尚待实机 Profile",
+    "target_device": null,
+    "cpu": null,
+    "gpu": null,
+    "memory_gb": null,
+    "platform": null,
+    "build_revision": null,
+    "resolution": null,
+    "quality": null,
+    "vr_eye_configuration": null,
+    "budget": {
+      "cpu_ms": null,
+      "gpu_ms": null,
+      "particle_count": null,
+      "instance_count": null,
+      "texture_memory_mb": null
+    },
+    "scenarios": [
+      {
+        "name": "Single",
+        "status": "NotRun",
+        "not_applicable_reason": null,
+        "instance_count": null,
+        "cpu_ms": null,
+        "gpu_ms": null,
+        "niagara_instances": null,
+        "particle_count": null,
+        "overdraw": null,
+        "texture_memory_mb": null,
+        "evidence_refs": []
+      },
+      {
+        "name": "Concurrent10",
+        "status": "NotRun",
+        "not_applicable_reason": null,
+        "instance_count": null,
+        "cpu_ms": null,
+        "gpu_ms": null,
+        "niagara_instances": null,
+        "particle_count": null,
+        "overdraw": null,
+        "texture_memory_mb": null,
+        "evidence_refs": []
+      },
+      {
+        "name": "Concurrent30",
+        "status": "NotRun",
+        "not_applicable_reason": null,
+        "instance_count": null,
+        "cpu_ms": null,
+        "gpu_ms": null,
+        "niagara_instances": null,
+        "particle_count": null,
+        "overdraw": null,
+        "texture_memory_mb": null,
+        "evidence_refs": []
+      },
+      {
+        "name": "OrdinaryHit50",
+        "status": "NotRun",
+        "not_applicable_reason": null,
+        "instance_count": null,
+        "cpu_ms": null,
+        "gpu_ms": null,
+        "niagara_instances": null,
+        "particle_count": null,
+        "overdraw": null,
+        "texture_memory_mb": null,
+        "evidence_refs": []
+      },
+      {
+        "name": "ConcurrentHeavyImpact",
+        "status": "NotRun",
+        "not_applicable_reason": null,
+        "instance_count": null,
+        "cpu_ms": null,
+        "gpu_ms": null,
+        "niagara_instances": null,
+        "particle_count": null,
+        "overdraw": null,
+        "texture_memory_mb": null,
+        "evidence_refs": []
+      },
+      {
+        "name": "StackedPersistentArea",
+        "status": "NotRun",
+        "not_applicable_reason": null,
+        "instance_count": null,
+        "cpu_ms": null,
+        "gpu_ms": null,
+        "niagara_instances": null,
+        "particle_count": null,
+        "overdraw": null,
+        "texture_memory_mb": null,
+        "evidence_refs": []
+      },
+      {
+        "name": "BatchProjectiles",
+        "status": "NotRun",
+        "not_applicable_reason": null,
+        "instance_count": null,
+        "cpu_ms": null,
+        "gpu_ms": null,
+        "niagara_instances": null,
+        "particle_count": null,
+        "overdraw": null,
+        "texture_memory_mb": null,
+        "evidence_refs": []
+      }
+    ],
+    "risk_review": {
+      "Overdraw": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "ParticleCount": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "MaterialComplexity": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "InstanceCost": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "TextureMemory": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "Scalability": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "Pooling": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "Cull": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "TransparentLayers": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "Distortion": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "DynamicLights": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "CPUCollision": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "Ribbon": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "MeshParticles": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      },
+      "FixedBounds": {
+        "status": "NotAssessed",
+        "measurement": null,
+        "evidence_refs": [],
+        "notes": null
+      }
+    }
+  },
+  "reuse_measurement": {
+    "definition": null,
+    "reused_count": null,
+    "total_count": null,
+    "ratio": null,
+    "evidence_refs": []
+  },
+  "deprecated": {
+    "replacement_vfx_tag": null,
+    "reason": null,
+    "upgrade_notes": null,
+    "applies_to": "Future retired logical VFX; does not retain this migration's obsolete folders or compatibility redirectors."
+  },
+  "evidence": [],
+  "uncompleted_items": [],
+  "decision": {
+    "production_ready": false,
+    "decided_by": null,
+    "decided_at": null,
+    "notes": null
+  }
+}

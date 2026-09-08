@@ -1,0 +1,293 @@
+{
+  "template_version": "1.0",
+  "record_type": "ProductionIntake",
+  "record_id": null,
+  "instructions": "Copy this blank template per authorized request. Null means unknown/unmeasured. Examples in source specifications do not authorize production.",
+  "request": {
+    "verbatim_user_request": null,
+    "source_reference": null,
+    "authorized_scope": null,
+    "mode": null,
+    "elements": [],
+    "requested_items": [],
+    "target_platforms": [],
+    "assumptions": []
+  },
+  "pack": {
+    "name": null,
+    "version": null,
+    "engine_version": "5.8",
+    "minimum_framework_version": null,
+    "last_updated": null
+  },
+  "metadata": {
+    "category": null,
+    "element": null,
+    "form": null,
+    "context": null,
+    "lifecycle": null,
+    "priority": null,
+    "gameplay_tag": null
+  },
+  "allowed_values": {
+    "category": [
+      "Cast",
+      "Projectile",
+      "Trail",
+      "Beam",
+      "Impact",
+      "Area",
+      "Status",
+      "Space",
+      "Lifecycle",
+      "Character",
+      "World",
+      "Surface",
+      "Destruction",
+      "Indicator",
+      "UI"
+    ],
+    "element": [
+      "None",
+      "Energy",
+      "Fire",
+      "Water",
+      "Ice",
+      "Lightning",
+      "Wind",
+      "Earth",
+      "Nature",
+      "Poison",
+      "Light",
+      "Dark",
+      "Arcane",
+      "Tech",
+      "Physical"
+    ],
+    "form": [
+      "Flash",
+      "Explosion",
+      "Shockwave",
+      "Ring",
+      "Orb",
+      "Beam",
+      "Slash",
+      "Trail",
+      "Column",
+      "Cloud",
+      "Burst",
+      "Wave",
+      "Field",
+      "Circle",
+      "Portal",
+      "Spark",
+      "Smoke",
+      "Debris"
+    ],
+    "context": [
+      "Combat",
+      "Character",
+      "Weapon",
+      "World",
+      "UI",
+      "Cinematic",
+      "Interaction"
+    ],
+    "lifecycle": [
+      "OneShot",
+      "Loop",
+      "Persistent",
+      "Attached"
+    ],
+    "priority": [
+      "Critical",
+      "Combat",
+      "Cosmetic",
+      "Ambient"
+    ]
+  },
+  "gameplay": {
+    "purpose": null,
+    "visual_tier": null,
+    "location_or_attachment": null,
+    "high_frequency": null,
+    "persistent": null,
+    "range_indicator_needed": null,
+    "frequency_per_second": null
+  },
+  "reuse_search": {
+    "status": "NotRun",
+    "search_scope": null,
+    "checks": [
+      {
+        "asset_type": "NiagaraSystem",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "NiagaraEmitter",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "NiagaraModule",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "MasterMaterial",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "MaterialInstance",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "MaterialFunction",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "Texture",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "StaticMesh",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "Curve",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      },
+      {
+        "asset_type": "EffectType",
+        "query": null,
+        "matches": [],
+        "evidence_refs": [],
+        "decision": null
+      }
+    ],
+    "reused_assets": [],
+    "new_assets_with_reason": [],
+    "reuse_ratio": {
+      "numerator": null,
+      "denominator": null,
+      "measurement_definition": null,
+      "value": null
+    },
+    "parameterized_variants": []
+  },
+  "visual_design": {
+    "one_sentence_focus": null,
+    "direction": null,
+    "element_language": {
+      "shape": null,
+      "motion": null,
+      "timing": null,
+      "material": null,
+      "secondary_fx": null
+    },
+    "timeline": [
+      {
+        "phase": "Anticipation",
+        "start_seconds": null,
+        "end_seconds": null,
+        "role": null
+      },
+      {
+        "phase": "PrimaryImpact",
+        "start_seconds": null,
+        "end_seconds": null,
+        "role": null
+      },
+      {
+        "phase": "SecondaryMotion",
+        "start_seconds": null,
+        "end_seconds": null,
+        "role": null
+      },
+      {
+        "phase": "Residual",
+        "start_seconds": null,
+        "end_seconds": null,
+        "role": null
+      }
+    ],
+    "spatial_layers": {
+      "near": null,
+      "mid": null,
+      "far": null
+    },
+    "emitters": [],
+    "user_parameters": [],
+    "color_profile": {
+      "primary": null,
+      "secondary": null,
+      "accent": null
+    }
+  },
+  "integration": {
+    "niagara_soft_object_path": null,
+    "catalog_asset_path": null,
+    "manager_entry_point": null,
+    "manager_call_test_plan": null,
+    "spawn_mode": null,
+    "pooling": null,
+    "auto_destroy": null,
+    "effect_type": null,
+    "fixed_bounds_plan": null,
+    "instance_limit": null,
+    "hard_reference_review": null
+  },
+  "scalability": {
+    "High": null,
+    "Medium": null,
+    "Low": null,
+    "VRMobile": null,
+    "Cinematic": null
+  },
+  "batch": {
+    "authorized_matrix": [],
+    "shared_assets_first": [],
+    "creation_order": [],
+    "child_intake_records": [],
+    "distinct_variant_justifications": []
+  },
+  "verification_plan": {
+    "visual": null,
+    "gameplay": null,
+    "performance_profile": null,
+    "duplicate_assets": null,
+    "dependency": null,
+    "catalog": null
+  },
+  "delivery": {
+    "created_assets": [],
+    "reused_assets": [],
+    "test_results": [],
+    "uncompleted_items": []
+  }
+}

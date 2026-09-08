@@ -1,0 +1,16 @@
+import unreal as U,pathlib
+ROOT='/Game/FireMage';SRC=pathlib.Path('F:/game/MythicVFXLab/ArtSource/FireMage');at=U.AssetToolsHelpers.get_asset_tools();mel=U.MaterialEditingLibrary
+assert not U.EditorLevelLibrary.get_game_world()
+t=U.AssetImportTask();t.filename=str(SRC/'Textures/T_PY_FlameFlipbook.png');t.destination_path=ROOT+'/Textures';t.automated=True;t.replace_existing=True;t.save=True;at.import_asset_tasks([t])
+tex=U.load_asset(ROOT+'/Textures/T_PY_FlameFlipbook')
+for k,v in {'srgb':True,'compression_settings':U.TextureCompressionSettings.TC_DEFAULT,'max_texture_size':2048,'power_of_two_mode':U.TexturePowerOfTwoSetting.STRETCH_TO_POWER_OF_TWO,'lod_group':U.TextureGroup.TEXTUREGROUP_EFFECTS,'address_x':U.TextureAddress.TA_CLAMP,'address_y':U.TextureAddress.TA_CLAMP}.items():tex.set_editor_property(k,v)
+U.EditorAssetLibrary.save_loaded_asset(tex,False)
+exec((SRC/'material_helpers.py').read_text(encoding='utf-8-sig'))
+m=newmat('M_PY_Flipbook');pc=node(m,U.MaterialExpressionParticleColor)
+s=node(m,U.MaterialExpressionParticleSubUV,texture=tex,sampler_type=U.MaterialSamplerType.SAMPLERTYPE_COLOR,blend=True)
+output(mul(m,mul(m,s,pc),scalar(m,'Energy',4.0)),m,U.MaterialProperty.MP_EMISSIVE_COLOR)
+a=node(m,U.MaterialExpressionMultiply);connect(s,a,'A','A');connect(pc,a,'B','A');a=mul(m,a,scalar(m,'Density',1.))
+fade=node(m,U.MaterialExpressionDepthFade,fade_distance_default=8.);connect(a,fade,'Opacity');output(fade,m,U.MaterialProperty.MP_OPACITY);finish(m)
+instance('MI_PY_FlipbookCore',m,None,4.,1.)
+instance('MI_PY_FlipbookPlume',m,None,3.2,.9)
+U.EditorAssetLibrary.save_directory(ROOT,False,True);print('FIRE_FLIPBOOK_MATERIAL_READY')

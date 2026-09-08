@@ -1,0 +1,46 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "{BD6CAD1D-4F80-0F31-80D7-C9BB4901F400}",
+  "Category": "VFX",
+  "Description": "ModularGameVFX 视觉实验室：用于研发、预览与验证可复用 Niagara 资产和 GameplayTag VFX Catalog。",
+  "Plugins": [
+    {
+      "Name": "Niagara",
+      "Enabled": true
+    },
+    {
+      "Name": "EditorScriptingUtilities",
+      "Enabled": true
+    },
+    {
+      "Name": "Monolith",
+      "Enabled": true
+    },
+    {
+      "Name": "GaeaUnrealTools",
+      "Enabled": true
+    },
+    {
+      "Name": "ModularGameVFX",
+      "Enabled": true
+    },
+    {
+      "Name": "ModularGameVFXDemo",
+      "Enabled": true
+    },
+    {
+      "Name": "ModularGameVFXShowcase",
+      "Enabled": true
+    }
+  ],
+  "TargetPlatforms": [
+    "Windows"
+  ],
+  "Modules": [
+    {
+      "Name": "MythicVFXLab",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}

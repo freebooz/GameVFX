@@ -1,0 +1,7 @@
+{
+  "original_plasma_texture": "Textures/T_AM_ArcanePlasma.png",
+  "retained_legacy_core_triangles": 192,
+  "textures": 5,
+  "runtime_core": "Direction-aligned plasma sprite",
+  "method": "Original generated RGBA plasma plus analytic masks, procedural flowing ribbon and bounded CPU particles"
+}

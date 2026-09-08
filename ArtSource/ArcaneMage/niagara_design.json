@@ -1,0 +1,116 @@
+[
+  {
+    "name": "Missile",
+    "duration": 2.7,
+    "bounds": [
+      [
+        -2600,
+        -2600,
+        -800
+      ],
+      [
+        2600,
+        2600,
+        1200
+      ]
+    ],
+    "emitters": [
+      [
+        "CoreGlow",
+        0,
+        1,
+        "Instances/MI_AM_Core"
+      ],
+      [
+        "PointedCore",
+        1,
+        1,
+        "Instances/MI_AM_Plasma"
+      ],
+      [
+        "OrbitalMotes",
+        2,
+        14,
+        "Instances/MI_AM_Star"
+      ]
+    ]
+  },
+  {
+    "name": "Impact",
+    "duration": 1,
+    "bounds": [
+      [
+        -200,
+        -200,
+        -200
+      ],
+      [
+        200,
+        200,
+        200
+      ]
+    ],
+    "emitters": [
+      [
+        "ArcaneShards",
+        10,
+        24,
+        "Instances/MI_AM_Star"
+      ],
+      [
+        "RunicRipple",
+        11,
+        1,
+        "Instances/MI_AM_Seal"
+      ],
+      [
+        "CoreFlash",
+        12,
+        1,
+        "Instances/MI_AM_Core"
+      ],
+      [
+        "PlasmaDetonation",
+        13,
+        6,
+        "Instances/MI_AM_ImpactPlasma"
+      ]
+    ]
+  },
+  {
+    "name": "Channel",
+    "duration": 2.65,
+    "bounds": [
+      [
+        -40,
+        -120,
+        0
+      ],
+      [
+        180,
+        120,
+        240
+      ]
+    ],
+    "emitters": [
+      [
+        "PalmSeal",
+        20,
+        1,
+        "Instances/MI_AM_Seal"
+      ],
+      [
+        "ChannelMotes",
+        21,
+        20,
+        "Instances/MI_AM_Star"
+      ],
+      [
+        "GatheringPlasma",
+        22,
+        1,
+        "Instances/MI_AM_ImpactPlasma"
+      ]
+    ]
+  }
+]
