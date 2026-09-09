@@ -294,10 +294,27 @@ bool AVFXShowcaseController::Replay()
 void AVFXShowcaseController::ClearPlayback(bool bImmediate)
 {
     UModularGameVFXBlueprintLibrary::StopAllVFXForOwner(this,this,bImmediate);
-    Handles.Reset();MovingAnchors.Reset();AnchorStartTimes.Reset();AnchorStartLocations.Reset();AnchorTargetLocations.Reset();
+    MovingAnchors.Reset();AnchorStartTimes.Reset();AnchorStartLocations.Reset();AnchorTargetLocations.Reset();
     // Attached systems must finish before their anchors are destroyed on graceful stop.
-    if(bImmediate){for(USceneComponent* Anchor:PreviewAnchors)if(Anchor)Anchor->DestroyComponent();PreviewAnchors.Reset();CombatScreenAnchors.Reset();}
+    if(bImmediate){for(USceneComponent* Anchor:PreviewAnchors)if(Anchor)Anchor->DestroyComponent();PreviewAnchors.Reset();CombatScreenAnchors.Reset();Handles.Reset();PreviewHandleAnchors.Reset();}
     TestCount=0;
+}
+void AVFXShowcaseController::CleanupFinishedPreviews()
+{
+    for(int32 Index=Handles.Num()-1;Index>=0;--Index)
+    {
+        const FVFXHandle Handle=Handles[Index];
+        if(UModularGameVFXBlueprintLibrary::IsVFXHandleValid(this,Handle))continue;
+        if(USceneComponent* Anchor=PreviewHandleAnchors.FindRef(Handle.Id).Get())
+        {
+            PreviewAnchors.Remove(Anchor);
+            Anchor->DestroyComponent();
+        }
+        PreviewHandleAnchors.Remove(Handle.Id);MovingAnchors.Remove(Handle.Id);
+        AnchorStartTimes.Remove(Handle.Id);AnchorStartLocations.Remove(Handle.Id);AnchorTargetLocations.Remove(Handle.Id);
+        Handles.RemoveAtSwap(Index);
+    }
+    CombatScreenAnchors.RemoveAll([](const TWeakObjectPtr<USceneComponent>& Anchor){return !Anchor.IsValid();});
 }
 void AVFXShowcaseController::Stop(bool bImmediate)
 {bLoop=false;bAutoPreview=false;ClearPlayback(bImmediate);LastMessage=bImmediate?TEXT("已立即停止。"):TEXT("已停止新增播放，正在等待现有效果自然结束。");OnChanged.Broadcast();}
@@ -408,8 +425,10 @@ FVFXHandle AVFXShowcaseController::SpawnPreview(FGameplayTag Tag,const FVector& 
     if(Handle.IsValid())
     {
         Handles.Add(Handle);LastMessage=TEXT("已通过游戏标签、特效目录和特效管理器请求播放。");
+        if(Anchor)PreviewHandleAnchors.Add(Handle.Id,Anchor);
         if(Anchor&&Preview.PreviewMode==EVFXPreviewMode::Projectile){MovingAnchors.Add(Handle.Id,Anchor);AnchorStartTimes.Add(Handle.Id,MotionElapsed);AnchorStartLocations.Add(Handle.Id,Source);AnchorTargetLocations.Add(Handle.Id,Target);}
     }
+    else if(Anchor){PreviewAnchors.Remove(Anchor);Anchor->DestroyComponent();}
     return Handle;
 }
 void AVFXShowcaseController::OnVFXReady(FVFXHandle Handle,bool bSuccess)
@@ -485,8 +504,15 @@ void AVFXShowcaseController::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);const double Now=FPlatformTime::Seconds();const double RealDelta=LastTickTime>0?Now-LastTickTime:DeltaSeconds;LastTickTime=Now;
     if(RealDelta>0){Performance.FrameTimeMs=FMath::Lerp(Performance.FrameTimeMs,float(RealDelta*1000),.1f);Performance.FPS=1000.f/FMath::Max(Performance.FrameTimeMs,.01f);}
-    UModularGameVFXBlueprintLibrary::GetVFXRuntimeCounts(this,Performance.ManagedVFXCount,Performance.ActiveVFXCount);
-    Performance.ActiveNiagaraSystems=0;for(TObjectIterator<UNiagaraComponent> It;It;++It)if(It->GetWorld()==GetWorld()&&It->IsActive())++Performance.ActiveNiagaraSystems;
+    // The HUD consumes telemetry at 4 Hz. Do not scan every editor Niagara object every frame.
+    ResourceUpdateElapsed+=DeltaSeconds;
+    if(ResourceUpdateElapsed>=.25f)
+    {
+        ResourceUpdateElapsed=0;
+        CleanupFinishedPreviews();
+        UModularGameVFXBlueprintLibrary::GetVFXRuntimeCounts(this,Performance.ManagedVFXCount,Performance.ActiveVFXCount);
+        Performance.ActiveNiagaraSystems=0;for(TObjectIterator<UNiagaraComponent> It;It;++It)if(It->GetWorld()==GetWorld()&&It->IsActive())++Performance.ActiveNiagaraSystems;
+    }
     Performance.CurrentTestCount=TestCount;Performance.Quality=Quality;
     MotionElapsed+=DeltaSeconds;SequenceElapsed+=DeltaSeconds;
     if(bUseExistingCombatWorld)
@@ -660,11 +686,11 @@ void AVFXShowcaseController::CaptureSmokeStage(const FString& Stage,bool bScreen
     {
         int32 TextControls=0;TArray<TSharedPtr<FJsonValue>> FontMismatches,ChoiceCaptions;
         TArray<UUserWidget*> Pending={LiveWidget};TSet<UUserWidget*> Visited;
-        auto AuditFont=[&](UWidget* Control,int32 Size)
+        auto AuditFont=[&](UWidget* Control,float Size)
         {
             ++TextControls;
-            if(Size!=VFXShowcaseUI::FontSize)
-                FontMismatches.Add(MakeShared<FJsonValueString>(Control->GetName()+FString::Printf(TEXT(": %d"),Size)));
+            if(!FMath::IsNearlyEqual(Size,VFXShowcaseUI::ViewportFontSize(LiveWidget)))
+                FontMismatches.Add(MakeShared<FJsonValueString>(Control->GetName()+FString::Printf(TEXT(": %.2f"),Size)));
         };
         while(!Pending.IsEmpty())
         {
@@ -680,7 +706,7 @@ void AVFXShowcaseController::CaptureSmokeStage(const FString& Stage,bool bScreen
                 else if(USpinBox* Spin=Cast<USpinBox>(Control))AuditFont(Control,Spin->GetFont().Size);
                 else if(UComboBoxString* Combo=Cast<UComboBoxString>(Control))
                 {
-                    AuditFont(Control,Combo->GetFont().Size);
+                    // Combo uses generated text widgets; its construction-only Font is not the rendered caption.
                     if(Combo->OnGenerateWidgetEvent.IsBound())
                         for(int32 I=0;I<Combo->GetOptionCount();++I)
                         {

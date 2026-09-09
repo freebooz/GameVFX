@@ -1,10 +1,16 @@
 #pragma once
 #include "CoreMinimal.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 
 /** Presentation-only vocabulary. Gameplay tags, action payloads and stored enum keys stay unchanged. */
 namespace VFXShowcaseUI
 {
-    constexpr int32 FontSize = 12;
+    constexpr int32 FontSize = 9;
+    inline float ViewportFontSize(const UObject* Context)
+    {
+        // Combat Canvas text is 9 pixels; UMG additionally applies the viewport DPI curve.
+        return FontSize / FMath::Max(UWidgetLayoutLibrary::GetViewportScale(Context), .01f);
+    }
 
     inline FString Chinese(const FString& Key)
     {
