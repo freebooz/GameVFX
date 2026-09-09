@@ -3,7 +3,7 @@
   "Version": 10000,
   "VersionName": "1.0.0",
   "FriendlyName": "ModularGameVFX Demo",
-  "Description": "Optional third-person spell demonstration, AI target, and 演示关卡 for ModularGameVFX.",
+  "Description": "Optional third-person spell demonstration, AI target, and L_ModularGameVFX_Demo map for ModularGameVFX.",
   "Category": "Visual Effects",
   "CreatedBy": "ModularGameVFX Team",
   "CanContainContent": true,

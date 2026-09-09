@@ -1,6 +1,6 @@
-# 演示关卡与操作配置
+# L_ModularGameVFX_Demo 与操作配置
 
-启用 MythicVFXDemo 后打开 `/MythicVFXDemo/Maps/演示关卡`，点击运行。地图自带演示 GameMode，不需要把它设成整个项目的默认 GameMode。
+启用 ModularGameVFXDemo 后打开 `/ModularGameVFXDemo/Maps/L_ModularGameVFX_Demo`，点击运行。地图自带演示 GameMode，不需要把它设成整个项目的默认 GameMode。
 
 1–8 分别是寒冰箭、冰环、粉色花瓣、绿色治疗、火球、火焰冲击、烈焰风暴、奥术飞弹。鼠标点击选择怪物。右键拖动转向，左键拖动观察，双键前进，滚轮缩放。W 前进、S 退步、A/D 转向、Q/E 横移，右键+A/D 横移，Space 跳跃，Tab 切换目标，Esc 取消。
 

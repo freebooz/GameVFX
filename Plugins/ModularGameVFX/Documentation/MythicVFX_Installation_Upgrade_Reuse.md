@@ -1,6 +1,6 @@
 # Mythic VFX 1.0.0 安装、升级与复用
 
-MythicVFX 是只含资产的 Niagara 内容插件。MythicVFXDemo 是可选的演示插件，提供角色、施法动画、怪物 AI、操作和“演示关卡”。仅使用特效时只安装 MythicVFX。
+MythicVFX 是只含资产的 Niagara 内容插件。ModularGameVFXDemo 是可选的演示插件，提供角色、施法动画、怪物 AI、操作和 `L_ModularGameVFX_Demo`。仅使用特效时只安装 MythicVFX。
 
 ## 目录与依赖
 
@@ -18,7 +18,7 @@ Plugins/
     Documentation/            目录表、版本说明、路径迁移表
   MythicVFXDemo/
     MythicVFXDemo.uplugin
-    Content/Maps/演示关卡.umap
+    Content/Maps/L_ModularGameVFX_Demo.umap
     Content/{Characters,Animations,Environment,Blueprints,Cinematics}/
     Source/MythicVFXDemo/      可独立编译的演示运行时模块
     Tests/                    编辑器自动验证脚本
@@ -32,7 +32,7 @@ Niagara 中 Systems 存最终系统、Modules 存自定义模块、Scalability �
 
 1. 关闭目标工程编辑器。把 `MythicVFX` 整个文件夹复制到目标工程的 `Plugins` 目录。也可以使用发布包中的安装工具，默认仅安装资源插件。
 2. 打开工程并启用 Mythic VFX 和 Niagara。在内容浏览器开启“显示插件内容”。资产挂载点始终是 `/MythicVFX/`。
-3. 演示时另安装并启用 MythicVFXDemo。打开 `/MythicVFXDemo/Maps/演示关卡`。地图设置自带演示 GameMode。
+3. 演示时另安装并启用 ModularGameVFXDemo。打开 `/ModularGameVFXDemo/Maps/L_ModularGameVFX_Demo`。地图设置自带演示 GameMode。
 4. 演示 DLL 对应本机 UE 5.8 源码构建。其他引擎构建需从附带源码重新编译演示插件。纯内容插件不需要项目 C++。本次未验证旧版引擎和移动端。
 
 ## 复用

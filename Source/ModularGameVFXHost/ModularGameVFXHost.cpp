@@ -28,7 +28,7 @@ class FModularGameVFXHostModule : public FDefaultGameModuleImpl
     {
         if(!World||(World->WorldType!=EWorldType::Game&&World->WorldType!=EWorldType::PIE))return;
         const FString Package=World->GetOutermost()->GetName();
-        if(!Package.StartsWith(TEXT("/ModularGameVFXDemo/Maps/"))||!Package.EndsWith(TEXT("演示关卡")))return;
+        if(!Package.StartsWith(TEXT("/ModularGameVFXDemo/Maps/"))||!Package.EndsWith(TEXT("L_ModularGameVFX_Demo")))return;
         World->OnWorldBeginPlay.AddWeakLambda(World,[World](){AttachCombatWorkbench(World);});
     }
 public:

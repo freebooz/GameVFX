@@ -154,7 +154,7 @@
 
 **Interfaces:**
 - Consumes: public `ModularGameVFX` module and `/ModularGameVFX` assets.
-- Produces: `/Script/ModularGameVFXDemo` and `/ModularGameVFXDemo/Maps/演示关卡`.
+- Produces: `/Script/ModularGameVFXDemo` and `/ModularGameVFXDemo/Maps/L_ModularGameVFX_Demo`.
 
 - [ ] Rename the runtime module class, API macro, Build.cs class, module declaration, descriptor module entry, and binary manifest identity.
 - [ ] Replace demo hardcoded content paths with `/ModularGameVFX` and `/ModularGameVFXDemo` paths; do not refactor Character, GameMode, input, animation, combat, or AI behavior.
@@ -199,7 +199,7 @@
 - [ ] Update all asset paths, module names, filenames, descriptions, and install locations; remove old branding from canonical release files while preserving explicit migration documentation.
 - [ ] Build `MythicVFXLabEditor Win64 Development` with modules `MythicVFXLab`, `ModularGameVFX`, and `ModularGameVFXDemo`; treat UHT or compile errors as blocking.
 - [ ] Run Catalog reflection/data validation tests, one-path source scan, dependency audit, and current 13-system Niagara diagnostics.
-- [ ] Run the `演示关卡` smoke test and manually verify keys 1–8 after the automated checks finish.
+- [ ] Run the `L_ModularGameVFX_Demo` smoke test and manually verify keys 1–8 after the automated checks finish.
 - [ ] Install only `ModularGameVFX` into an empty UE 5.8 C++ host, compile/load it, verify base GameplayTags, and exercise one Catalog request.
-- [ ] Install core plus demo into the fixture, open `/ModularGameVFXDemo/Maps/演示关卡`, and confirm plugin independence from the original host project.
+- [ ] Install core plus demo into the fixture, open `/ModularGameVFXDemo/Maps/L_ModularGameVFX_Demo`, and confirm plugin independence from the original host project.
 - [ ] Build a fresh versioned release directory, compute SHA-256 for every delivered file, verify the installer against the manifest, and record all legacy-system failures separately from the current production systems.

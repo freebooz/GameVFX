@@ -193,7 +193,7 @@
 /Game/FrostMage/Blueprints/BP_FM_ThirdPersonController,/MythicVFXDemo/Blueprints/BP_Frost_ThirdPersonController
 /Game/FrostMage/Cinematics/LS_FM_CastShowcase,/MythicVFXDemo/Cinematics/LS_Frost_CastShowcase
 /Game/FrostMage/Maps/L_FrostMage_Cinematic,/MythicVFXDemo/Maps/L_FrostSpells_CinematicShowcase
-/Game/FrostMage/Maps/L_FrostMage_Test,/MythicVFXDemo/Maps/演示关卡
+/Game/FrostMage/Maps/L_FrostMage_Test,/ModularGameVFXDemo/Maps/L_ModularGameVFX_Demo
 /Game/FrostMage/Materials/Instances/MI_FM_ArcaneSeal,/MythicVFX/Effects/Frost/Materials/Instances/MI_Frost_ArcaneSeal
 /Game/FrostMage/Materials/Instances/MI_FM_Core,/MythicVFX/Effects/Frost/Materials/Instances/MI_Frost_Core
 /Game/FrostMage/Materials/Instances/MI_FM_Dendrite,/MythicVFX/Effects/Frost/Materials/Instances/MI_Frost_Dendrite
